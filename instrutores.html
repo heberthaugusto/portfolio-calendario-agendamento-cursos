@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agendar Curso — Ateliê Cacau (demo)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #F9F5EF; --warm: #EDE4D5; --caramel: #C4894A; --caramel-dark: #9E6A2E;
+  --chocolate: #3D1F0A; --text: #2A1505; --text-muted: #8B6A4E;
+  --border: rgba(61,31,10,0.12); --border-strong: rgba(61,31,10,0.25);
+  --radius: 12px; --radius-sm: 8px; --green: #2D7A4F;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+header{background:#5C3317;padding:1.25rem 2rem;display:flex;align-items:center;justify-content:center;min-height:88px;}
+.container{max-width:800px;margin:0 auto;padding:2.5rem 1.5rem 4rem;}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--chocolate);margin-bottom:.25rem;letter-spacing:.05em;}
+@media(max-width:480px){.page-title{font-size:22px;}}
+.page-sub{font-size:14px;color:var(--text-muted);margin-bottom:2.5rem;}
+.steps{display:flex;margin-bottom:2rem;overflow:hidden;}
+.step{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);padding:8px 8px;background:var(--warm);border:0.5px solid var(--border);flex:1;min-width:0;white-space:nowrap;overflow:hidden;}
+.step:first-child{border-radius:var(--radius-sm) 0 0 var(--radius-sm);}
+.step:last-child{border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
+.step+.step{border-left:none;}
+.step.active{background:var(--chocolate);color:rgba(255,255,255,.9);border-color:var(--chocolate);}
+.step.done{background:var(--caramel);color:white;border-color:var(--caramel);}
+.step-num{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;background:rgba(0,0,0,.1);}
+.step-label{overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:480px){
+  .step{padding:7px 5px;font-size:10px;gap:4px;}
+  .step-num{width:16px;height:16px;font-size:9px;}
+}
+.view{display:none;}.view.active{display:block;}
+.dur-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:1.5rem;}
+.dur-card{background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:1.5rem 1.25rem;cursor:pointer;transition:all .15s;text-align:center;}
+.dur-card:hover{border-color:var(--caramel);background:#FDF8F2;}
+.dur-card.selected{border-color:var(--chocolate);background:var(--chocolate);}
+.dur-icon{font-size:30px;margin-bottom:10px;}
+.dur-title{font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.dur-card.selected .dur-title,.dur-card.selected .dur-desc{color:white;}
+.dur-desc{font-size:12px;color:var(--text-muted);line-height:1.5;}
+.dur-card.selected .dur-desc{color:rgba(255,255,255,.65);}
+.dur-disabled{opacity:.5;cursor:not-allowed!important;}
+.dur-disabled:hover{border-color:var(--border)!important;background:white!important;}
+.cal-card{background:white;border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.cal-head{background:var(--chocolate);padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;}
+.cal-month-label{font-family:'Cormorant Garamond',serif;font-size:22px;color:white;}
+.cal-nav-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:var(--radius-sm);width:34px;height:34px;color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.cal-nav-btn:hover{background:rgba(255,255,255,.25);}
+.cal-body{padding:1.25rem 1.5rem 1rem;}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;}
+.cal-weekday{text-align:center;font-size:11px;font-weight:500;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;padding:4px 0;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-day{min-height:58px;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;padding:6px 3px 4px;cursor:pointer;border:0.5px solid transparent;transition:all .15s;overflow:hidden;}
+.cal-day:hover:not(.empty):not(.past):not(.blocked-day){background:var(--warm);border-color:var(--border);}
+.cal-day.empty{cursor:default;}
+.cal-day.past{opacity:.35;cursor:not-allowed;}
+.cal-day.blocked-day{background:var(--warm);cursor:not-allowed;}
+.cal-day.admin-blocked{background:#FDECEA;border:1.5px solid #EF9A9A;cursor:not-allowed;}
+.cal-day.admin-blocked .day-num{color:#C62828;}
+.cal-day.has-am{background:linear-gradient(to bottom,#FAEBD7 50%,white 50%);}
+.cal-day.has-pm{background:linear-gradient(to bottom,white 50%,#E8D5F0 50%);}
+.cal-day.has-am.has-pm{background:#F5E6E0;cursor:not-allowed;}
+/* Status colors - simplified */
+.cal-day.has-pending  { background:#FFF3E0; border:1.5px solid #FFB74D; }
+.cal-day.has-approved { background:#E8F5E9; border:1.5px solid #81C784; }
+.cal-day.has-pending.has-approved { background:#FFF3E0; border:1.5px solid #FFB74D; }
+/* availability labels inside day */
+.day-avail { width:100%; display:flex; flex-direction:column; gap:1px; margin-top:2px; }
+.avail-label { font-size:9px; font-weight:500; text-align:center; border-radius:3px; padding:1px 2px; line-height:1.3; }
+.avail-manha { background:rgba(255,255,255,0.7); color:#2E7D32; }
+.avail-tarde { background:rgba(255,255,255,0.7); color:#1565C0; }
+.cal-day.selected{background:var(--chocolate)!important;border-color:var(--chocolate)!important;}
+.cal-day.selected-range{background:rgba(61,31,10,.1)!important;border-color:var(--border-strong)!important;}
+.cal-day.selected .day-num{color:white;}
+.day-num{font-size:13px;line-height:1;color:var(--text);}
+.cal-day.past .day-num,.cal-day.blocked-day .day-num{color:var(--text-muted);}
+.day-tags{width:100%;margin-top:3px;display:flex;flex-direction:column;gap:2px;}
+.day-tag{font-size:9px;text-align:center;border-radius:3px;padding:1px 3px;line-height:1.3;}
+.tag-am{background:rgba(196,137,74,.2);color:#7A4A10;}
+.tag-pm{background:rgba(130,80,180,.2);color:#4A2A7A;}
+.tag-full{background:rgba(200,60,40,.15);color:#7A2A10;}
+.cal-legend{display:flex;gap:10px;flex-wrap:wrap;padding:.875rem 1.5rem;border-top:0.5px solid var(--border);background:var(--cream);}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);}
+.legend-swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+.sel-bar{background:var(--chocolate);color:white;border-radius:var(--radius);padding:1rem 1.5rem;margin-top:1rem;display:none;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.sel-bar.show{display:flex;}
+.sb-label{font-size:11px;opacity:.55;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;}
+.sb-val{font-family:'Cormorant Garamond',serif;font-size:17px;}
+.sb-btn{background:rgba(255,255,255,.12);border:0.5px solid rgba(255,255,255,.25);border-radius:var(--radius-sm);padding:6px 14px;font-size:12px;color:white;cursor:pointer;}
+.sb-btn:hover{background:rgba(255,255,255,.22);}
+.warn-box{background:#FEF3E2;border:0.5px solid #F0A500;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:#7A4A00;margin-top:8px;display:none;}
+.warn-box.show{display:block;}
+.next-btn{width:100%;margin-top:1rem;background:var(--caramel);color:white;border:none;border-radius:var(--radius);padding:14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:background .15s;}
+.next-btn:hover{background:var(--caramel-dark);}
+.next-btn:disabled{background:var(--border-strong);cursor:not-allowed;}
+.back-btn{width:100%;margin-top:8px;background:none;color:var(--text-muted);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:11px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;}
+.back-btn:hover{background:var(--warm);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+label{font-size:13px;font-weight:500;color:var(--text-muted);}
+label .req{color:var(--caramel);margin-left:2px;}
+input[type=text],input[type=email],input[type=number],select,textarea{font-family:'DM Sans',sans-serif;font-size:14px;background:white;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);outline:none;transition:border-color .15s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--caramel);}
+textarea{resize:vertical;min-height:120px;}
+.prefix-input{display:flex;}
+.prefix-input span{background:var(--warm);border:0.5px solid var(--border-strong);border-right:none;border-radius:var(--radius-sm) 0 0 var(--radius-sm);padding:10px 12px;font-size:14px;color:var(--text-muted);}
+.prefix-input input{border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
+.upload-zone{border:1.5px dashed var(--border-strong);border-radius:var(--radius);padding:2rem 1.5rem;text-align:center;cursor:pointer;background:var(--warm);transition:all .15s;}
+.upload-zone:hover{border-color:var(--caramel);background:#FDF6EC;}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:12px;}
+.photo-thumb{position:relative;aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;border:0.5px solid var(--border);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.ph-remove{position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.55);border:none;border-radius:50%;color:white;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.photo-add{aspect-ratio:1;border-radius:var(--radius-sm);border:1.5px dashed var(--border-strong);background:var(--warm);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;color:var(--text-muted);transition:all .15s;}
+.photo-add:hover{border-color:var(--caramel);color:var(--caramel);}
+.field-err input,.field-err select,.field-err textarea,.field-err .upload-zone{border-color:#C0392B!important;}
+.err-msg{font-size:12px;color:#C0392B;display:none;}
+.field-err .err-msg{display:block;}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--chocolate);margin:2rem 0 1.25rem;padding-bottom:.5rem;border-bottom:0.5px solid var(--border);}
+.sec-title:first-child{margin-top:0;}
+.date-bar{background:var(--warm);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px;}
+.db-label{font-size:12px;color:var(--text-muted);}
+.db-val{font-size:14px;font-weight:500;color:var(--chocolate);}
+.success-wrap{text-align:center;padding:3rem 2rem;background:white;border-radius:var(--radius);border:0.5px solid var(--border);}
+.success-icon{width:72px;height:72px;background:#F0F9F4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:32px;}
+.success-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--chocolate);margin-bottom:.5rem;}
+.success-body{font-size:14px;color:var(--text-muted);line-height:1.7;max-width:420px;margin:0 auto 1.5rem;}
+.success-details{background:var(--warm);border-radius:var(--radius-sm);padding:1rem 1.5rem;text-align:left;max-width:400px;margin:0 auto 2rem;}
+.sd-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;font-size:13px;border-bottom:0.5px solid var(--border);}
+.sd-row:last-child{border-bottom:none;}
+.sd-row span:first-child{color:var(--text-muted);flex-shrink:0;margin-right:8px;}
+.sd-row span:last-child{font-weight:500;color:var(--chocolate);text-align:right;}
+.new-btn{background:none;border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:10px 24px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;color:var(--text-muted);}
+.new-btn:hover{background:var(--warm);}
+/* LOADING OVERLAY */
+.loading-overlay{position:fixed;inset:0;background:rgba(61,31,10,.6);display:none;align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:1rem;}
+.loading-overlay.show{display:flex;}
+.loading-spinner{width:48px;height:48px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--caramel);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{color:white;font-size:14px;opacity:.8;}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Enviando solicitação...</div>
+</div>
+
+<header>
+  <div style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0.5rem 0">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:34px;color:#fff;letter-spacing:.04em;line-height:1">Ateliê Cacau</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.7);letter-spacing:.2em;text-transform:uppercase;margin-top:4px">Escola de confeitaria</div>
+  </div>
+</header>
+
+<div class="container">
+  <h1 class="page-title">AGENDAMENTO DE CURSOS</h1>
+  <p class="page-sub">Solicitar data para curso</p>
+
+  <div class="steps">
+    <div class="step active" id="step1"><div class="step-num">1</div><span class="step-label">Data</span></div>
+    <div class="step" id="step2"><div class="step-num">2</div><span class="step-label">Período</span></div>
+    <div class="step" id="step3"><div class="step-num">3</div><span class="step-label">Informações</span></div>
+    <div class="step" id="step4"><div class="step-num">4</div><span class="step-label">Confirmação</span></div>
+  </div>
+
+  <!-- STEP 1: CALENDAR -->
+  <div class="view active" id="view-cal">
+    <div class="cal-card">
+      <div class="cal-head">
+        <button class="cal-nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+        <span class="cal-month-label" id="cal-label"></span>
+        <button class="cal-nav-btn" onclick="changeMonth(1)">&#8250;</button>
+      </div>
+      <div class="cal-body">
+        <div class="cal-weekdays" id="cal-weekdays"></div>
+        <div class="cal-days" id="cal-days"></div>
+      </div>
+      <div class="cal-legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#FFF3E0;border:1.5px solid #FFB74D"></div> Reservado — pendente</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#E8F5E9;border:1.5px solid #81C784"></div> Confirmado</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#FDECEA;border:1.5px solid #EF9A9A"></div> Data bloqueada</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--warm);border:0.5px solid var(--border-strong)"></div> Indisponível</div>
+        <div class="legend-item" style="font-size:10px;color:var(--text-muted)">Texto <span style="color:#2E7D32;font-weight:500">manhã</span> / <span style="color:#1565C0;font-weight:500">tarde</span> = período ainda livre</div>
+      </div>
+    </div>
+    <div class="warn-box" id="cal-warn"></div>
+  </div>
+
+  <!-- STEP 2: PERIOD SELECTION -->
+  <div class="view" id="view-dur">
+    <div class="date-bar">
+      <div><div class="db-label">Data selecionada</div><div class="db-val" id="dur-date-display"></div></div>
+      <button class="sb-btn" style="background:var(--warm);color:var(--text);border-color:var(--border-strong)" onclick="backToCal()">← Alterar data</button>
+    </div>
+    <p style="font-size:14px;color:var(--text-muted);margin-bottom:1.25rem">Escolha o período que deseja para ministrar seu curso neste dia:</p>
+    <div class="dur-grid" id="dur-grid"></div>
+    <div class="warn-box" id="dur-warn"></div>
+    <button class="next-btn" id="btn-dur" disabled onclick="goToForm()">Continuar para informações →</button>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="view" id="view-form">
+    <div class="date-bar">
+      <div><div class="db-label">Data e horário escolhidos</div><div class="db-val" id="form-date-text"></div></div>
+      <button class="sb-btn" style="background:var(--warm);color:var(--text);border-color:var(--border-strong)" onclick="backToCal()">← Alterar</button>
+    </div>
+
+    <div class="sec-title">Sobre o instrutor</div>
+    <div class="form-grid">
+      <div class="form-group" id="fg-nome"><label>Nome completo <span class="req">*</span></label><input type="text" id="f-nome" placeholder="Seu nome completo" /><span class="err-msg">Informe seu nome</span></div>
+      <div class="form-group" id="fg-email"><label>E-mail <span class="req">*</span></label><input type="email" id="f-email" placeholder="seu@email.com" /><span class="err-msg">E-mail inválido</span></div>
+    </div>
+
+    <div class="sec-title">Sobre o curso</div>
+    <div class="form-grid">
+      <div class="form-group" id="fg-cat"><label>Categoria <span class="req">*</span></label>
+        <select id="f-cat" onchange="checkFornecedor()"><option value="">Selecionar...</option><option value="Chocolateria">🍫 Chocolateria</option><option value="Confeitaria">🎂 Confeitaria</option><option value="Salgados">🥐 Salgados</option><option value="Fornecedor">🏪 Fornecedor</option></select>
+        <span class="err-msg">Selecione a categoria</span></div>
+      <div class="form-group" id="fg-valor"><label>Valor do curso <span class="req">*</span></label>
+        <div class="prefix-input"><span>R$</span><input type="number" id="f-valor" placeholder="0,00" min="0" step="0.01" /></div>
+        <span class="err-msg">Informe o valor</span></div>
+      <div class="form-group" id="fg-tipo"><label>Tipo de curso <span class="req">*</span></label>
+        <select id="f-tipo" onchange="checkFornecedor()">
+          <option value="">Selecionar...</option>
+          <option value="Prático">🧑‍🍳 Prático</option>
+          <option value="Demonstrativo">👁️ Demonstrativo</option>
+        </select>
+        <span class="err-msg">Selecione o tipo de curso</span>
+      </div>
+      <div class="form-group form-full" id="fg-fornecedor" style="display:none">
+        <label>Nome do fornecedor <span class="req">*</span></label>
+        <input type="text" id="f-fornecedor" placeholder="Ex: Callebaut, Harald, Gustosia..." />
+        <span class="err-msg">Informe o nome do fornecedor</span>
+      </div>
+      <div class="form-group form-full" id="fg-titulo"><label>Título do curso <span class="req">*</span></label><input type="text" id="f-titulo" placeholder="Ex: Trufas Belgas com Ganache de Maracujá" /><span class="err-msg">Informe o título</span></div>
+      <div class="form-group form-full" id="fg-desc">
+        <label>Descrição — o que os alunos vão aprender <span class="req">*</span></label>
+        <textarea id="f-desc" placeholder="Descreva os tópicos, técnicas e materiais que serão abordados..." oninput="updateDescCount()"></textarea>
+        <div style="font-size:12px;color:var(--text-muted);text-align:right;margin-top:4px"><span id="desc-count">0</span>/500 caracteres mínimos</div>
+        <span class="err-msg">A descrição deve ter pelo menos 500 caracteres</span>
+      </div>
+    </div>
+
+    <div class="sec-title">Fotos para divulgação</div>
+    <div class="form-group form-full" id="fg-foto">
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('f-foto').click()">
+        <div style="font-size:28px;margin-bottom:8px">📷</div>
+        <div style="font-size:14px;font-weight:500">Clique para selecionar as fotos</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Formato <strong>JPG ou PNG</strong> · Mínimo <strong>1080×1080 px</strong> · Entre <strong>2 e 5 fotos</strong></div>
+      </div>
+      <input type="file" id="f-foto" accept="image/jpeg,image/png" multiple style="display:none" onchange="handleUpload(this)" />
+      <div class="photo-grid" id="photo-grid"></div>
+      <div id="foto-counter" style="font-size:12px;font-weight:500;margin-top:6px;display:none"></div>
+      <span class="err-msg">Envie entre 2 e 5 fotos válidas (mín. 1080×1080 px)</span>
+    </div>
+
+    <button class="next-btn" onclick="submitForm()" style="margin-top:2rem">Enviar solicitação</button>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="view" id="view-success">
+    <div class="success-wrap">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Solicitação enviada!</div>
+      <p class="success-body">Sua solicitação foi recebida. A data está reservada provisoriamente. Você será notificado por e-mail em até 5 dias úteis após a revisão.</p>
+      <div class="success-details" id="success-details"></div>
+      <button class="new-btn" onclick="resetAll()">Fazer nova solicitação</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODO DEMONSTRAÇÃO: substitui Firebase, Cloudinary e EmailJS por armazenamento local -->
+<script src="demo-store.js"></script>
+<script type="module">
+DemoStore.banner('Para ver o painel do administrador, abra <a href="admin.html" style="color:#9E6A2E;font-weight:500">admin.html</a>.');
+
+const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const WD = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const DUR_CONFIG = {
+  manha:   { ini:'09:00', fim:'12:30', iniForn:'09:00', fimForn:'11:30' },
+  tarde:   { ini:'13:30', fim:'17:00', iniForn:'13:30', fimForn:'16:00' },
+  dia:     { ini:'09:00', fim:'17:00' },
+  '2dias': { ini:'09:00', fim:'17:00' },
+};
+const DUR_RULE_HINT = {
+  manha:   '📅 Manhã: disponível de terça-feira a sábado (segundas reservadas para lives)',
+  tarde:   '📅 Tarde: disponível apenas de segunda-feira a sexta-feira',
+  dia:     '📅 Dia inteiro: disponível apenas de terça-feira a sexta-feira',
+  '2dias': '📅 2 dias consecutivos: o 1º dia deve ser de terça-feira a quinta-feira',
+};
+
+let dur=null, tIni=null, tFim=null;
+let selDates=[], waitD2=false;
+let calCur=new Date();
+// Open calendar on first available month (respecting 20-day rule)
+const _minDate=new Date(); _minDate.setDate(_minDate.getDate()+20);
+calCur=new Date(_minDate.getFullYear(), _minDate.getMonth(), 1);
+let validPhotos=[];
+let allBookings=[];
+
+// ── FIRESTORE ──────────────────────────────────────────────────────────
+let blockedDates=[];
+function getBlockedDates(){ return blockedDates; }
+
+// Which periods of a date are blocked by the admin.
+// Entries saved before the "periodo" field existed count as full-day blocks.
+function getBlockedPeriods(ds, list){
+  const src = list || blockedDates;
+  let am=false, pm=false;
+  for(const b of src){
+    if(b.date!==ds) continue;
+    const p = b.periodo || 'dia';
+    if(p==='dia'){ am=true; pm=true; }
+    else if(p==='manha') am=true;
+    else if(p==='tarde') pm=true;
+  }
+  return { am, pm, full: am&&pm, any: am||pm };
+}
+let releasedDates=[];
+function getReleasedDates(){ return releasedDates; }
+
+async function loadBookings(){
+  // Produção: três coleções do Firestore (agendamentos, datas_bloqueadas, datas_liberadas)
+  const d = DemoStore.getAll();
+  allBookings = d.agendamentos; blockedDates = d.datas_bloqueadas; releasedDates = d.datas_liberadas;
+}
+
+function getB(){ return allBookings.filter(b=>b.status!=='reprovado'); }
+
+// ── FOTOS ──────────────────────────────────────────────────────────────
+// Produção: upload sem assinatura para o Cloudinary, com timeout de 30 s e até 3 tentativas por foto.
+// Demo: a foto é reduzida e guardada localmente.
+async function uploadPhoto(file){ return DemoStore.uploadPhoto(file); }
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function toDS(y,m,d){ return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function addDays(ds,n){ const[y,m,d]=ds.split('-').map(Number); const dt=new Date(y,m-1,d+n); return toDS(dt.getFullYear(),dt.getMonth()+1,dt.getDate()); }
+
+// Max allowed booking date: last day of the month AFTER the current month.
+// Auto-unlocks on the 1st of every month.
+function getMaxAllowedDate(){
+  const today = new Date();
+  // Last day of (current month + 2) at day 0 = last day of (current month + 1)
+  const maxDate = new Date(today.getFullYear(), today.getMonth()+2, 0);
+  return toDS(maxDate.getFullYear(), maxDate.getMonth()+1, maxDate.getDate());
+}
+function fmtShort(ds){ const[y,m,d]=ds.split('-'); return `${d}/${m}/${y}`; }
+function fmtLong(ds){ const[y,m,d]=ds.split('-').map(Number); const dt=new Date(y,m-1,d); return `${WD[dt.getDay()]}, ${d} de ${MONTHS_PT[m-1]} de ${y}`; }
+function getWeekday(ds){ const[y,m,d]=ds.split('-').map(Number); return new Date(y,m-1,d).getDay(); }
+
+function getDayOccupancy(ds){
+  // Only count non-reprovado bookings for blocking
+  const bs=allBookings.filter(b=>b.status!=='reprovado'&&(b.data===ds||(b.data2&&b.data2===ds)));
+  let am=false,pm=false,full=false;
+  bs.forEach(b=>{ if(b.duracao==='dia'||b.duracao==='2dias') full=true; else if(b.duracao==='manha') am=true; else if(b.duracao==='tarde') pm=true; });
+  return {am,pm,full};
+}
+
+function getDayStatus(ds){
+  // Returns hasPending, hasApproved, amBooked, pmBooked
+  const bs=allBookings.filter(b=>b.status!=='reprovado'&&(b.data===ds||(b.data2&&b.data2===ds)));
+  let hasPending=false, hasApproved=false, amBooked=false, pmBooked=false, fullBooked=false;
+  bs.forEach(b=>{
+    if(b.status==='pendente') hasPending=true;
+    else if(b.status==='aprovado') hasApproved=true;
+    if(b.duracao==='manha') amBooked=true;
+    else if(b.duracao==='tarde') pmBooked=true;
+    else if(b.duracao==='dia'||b.duracao==='2dias') fullBooked=true;
+  });
+  return {hasPending, hasApproved, amBooked, pmBooked, fullBooked};
+}
+
+// Check if a period is allowed on a given date
+function isPeriodAllowed(ds, period){
+  const wd=getWeekday(ds);
+  if(wd===0) return false; // domingo nunca
+  // Check if Monday is explicitly released — unlocks morning, full day and 2-day
+  const isMondayReleased = wd===1 && getReleasedDates().some(r=>r.date===ds);
+  if(period==='manha')  return wd>=2&&wd<=6 || isMondayReleased;
+  if(period==='tarde')  return wd>=1&&wd<=5;
+  if(period==='dia')    return wd>=2&&wd<=5 || isMondayReleased;
+  if(period==='2dias')  return wd>=2&&wd<=4 || isMondayReleased;
+  return false;
+}
+
+function canBookPeriod(ds, period){
+  if(ds > getMaxAllowedDate()) return false;
+  if(!isPeriodAllowed(ds, period)) return false;
+  const blk=getBlockedPeriods(ds);
+  if(blk.full) return false;
+  const{am,pm,full}=getDayOccupancy(ds);
+  if(full) return false;
+  // A shift blocked by the admin is as unavailable as one already booked
+  const amTaken = am || blk.am;
+  const pmTaken = pm || blk.pm;
+  if(period==='dia'||period==='2dias') return !amTaken&&!pmTaken;
+  if(period==='manha') return !amTaken;
+  if(period==='tarde') return !pmTaken;
+  return true;
+}
+
+// A day is clickable if it still has at least one bookable period
+function isDayClickable(ds){
+  if(['manha','tarde','dia','2dias'].some(p=>canBookPeriod(ds,p))) return true;
+  return false;
+}
+
+// ── STEP 1: CALENDAR ──────────────────────────────────────────────────
+function renderCal(){
+  const y=calCur.getFullYear(),m=calCur.getMonth();
+  document.getElementById('cal-label').textContent=MONTHS_PT[m]+' '+y;
+  document.getElementById('cal-weekdays').innerHTML=WD.map(w=>`<div class="cal-weekday">${w}</div>`).join('');
+  const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
+  const today=new Date(); today.setHours(0,0,0,0);
+  const minDate=new Date(today); minDate.setDate(minDate.getDate()+20);
+  let html='';
+  for(let i=0;i<first;i++) html+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=toDS(y,m+1,d);
+    const isReleased=getReleasedDates().some(r=>r.date===ds);
+    const isPast=new Date(y,m,d)<minDate && !isReleased;
+    const isFutureLocked=ds > getMaxAllowedDate() && !isReleased;
+    const clickable=!isPast&&!isFutureLocked&&isDayClickable(ds);
+    const{am,pm,full}=getDayOccupancy(ds);
+    const{hasPending,hasApproved,amBooked,pmBooked,fullBooked}=getDayStatus(ds);
+    const blk=getBlockedPeriods(ds);
+    const isAdminBlocked=blk.full;   // only a whole-day block paints the day red
+    // Merge bookings with admin blocks: a blocked shift is as unavailable as a booked one
+    const amTaken   = amBooked   || blk.am;
+    const pmTaken   = pmBooked   || blk.pm;
+    const fullTaken = fullBooked || blk.full;
+    let cls='cal-day';
+    if(isPast || isFutureLocked) cls+=' past';
+    else if(isAdminBlocked) cls+=' admin-blocked';
+    else if(!clickable) cls+=' blocked-day';
+    else if(fullTaken||(amTaken&&pmTaken)) cls+=' blocked-day';
+    // Simple color: any pending = orange, all confirmed = green
+    if(!isPast && !isAdminBlocked){
+      if(hasPending)       cls+=' has-pending';
+      else if(hasApproved) cls+=' has-approved';
+    }
+    // Availability labels: show free periods when one is booked but not full day
+    let availHtml='';
+    const isSaturday = getWeekday(ds) === 6;
+    const isMonday   = getWeekday(ds) === 1;
+    const isMondayReleased = isMonday && getReleasedDates().some(r=>r.date===ds);
+    if(!isPast && !isAdminBlocked && (amTaken||pmTaken) && !fullTaken && !(amTaken&&pmTaken)){
+      availHtml='<div class="day-avail">';
+      // Show manhã on Mondays only if explicitly released
+      availHtml+=(!amTaken && (!isMonday || isMondayReleased))?'<div class="avail-label avail-manha">manhã</div>':'<div style="height:12px"></div>';
+      // Never show "tarde" on Saturdays — afternoon not available
+      availHtml+=(!pmTaken && !isSaturday)?'<div class="avail-label avail-tarde">tarde</div>':'';
+      availHtml+='</div>';
+    }
+    let tags='';
+    const blockedEntry=isAdminBlocked?getBlockedDates().find(b=>b.date===ds):null;
+    const onclick=clickable?`onclick="selectDay('${ds}')"`:'' ;
+    const title=blockedEntry?(blockedEntry.reason||'Data bloqueada'):'';
+    html+=`<div class="${cls}" ${onclick} ${title?`title="${title}"`:''}><div class="day-num">${d}</div>${availHtml}</div>`;
+  }
+  document.getElementById('cal-days').innerHTML=html;
+}
+
+window.selectDay = function(ds){
+  const warn=document.getElementById('cal-warn'); warn.classList.remove('show');
+  // go to period selection
+  selectedCalDate=ds;
+  document.getElementById('dur-date-display').textContent=fmtLong(ds);
+  renderDurCards(ds);
+  setStep(2); show('view-dur');
+}
+
+window.changeMonth = function(dir){ calCur.setMonth(calCur.getMonth()+dir); renderCal(); }
+window.backToCal = function(){ dur=null; tIni=null; tFim=null; selDates=[]; waitD2=false; setStep(1); show('view-cal'); renderCal(); }
+
+// ── STEP 2: PERIOD SELECTION ──────────────────────────────────────────
+let selectedCalDate=null;
+
+function renderDurCards(ds){
+  const wd=getWeekday(ds);
+  const wdName=WD[wd];
+  const periods=[
+    {id:'manha', icon:'🌅', title:'Somente manhã',    desc:'Das <strong>09h às 12h30</strong><br><span style="font-size:11px;color:var(--text-muted)">ou 09h às 11h30 (fornecedor)</span>',  rule:'Seg a Sáb'},
+    {id:'tarde', icon:'🌆', title:'Somente tarde',    desc:'Das <strong>13h30 às 17h</strong><br><span style="font-size:11px;color:var(--text-muted)">ou 13h30 às 16h (fornecedor)</span>',   rule:'Seg a Sex'},
+    {id:'dia',   icon:'☀️', title:'Dia inteiro',       desc:'Das <strong>09h às 17h</strong>',           rule:'Seg a Sex'},
+    {id:'2dias', icon:'📅', title:'2 dias inteiros',  desc:`Das <strong>09h às 17h</strong> — 2 dias consecutivos<br>Reserva: <strong>${fmtShort(ds)}</strong> e <strong>${fmtShort(addDays(ds,1))}</strong>`,  rule:'1º dia: Seg a Qui'},
+  ];
+  const grid=document.getElementById('dur-grid');
+  grid.innerHTML=periods.map(p=>{
+    const avail=canBookPeriod(ds,p.id);
+    const sel=dur===p.id;
+    let cls='dur-card'+(sel?' selected':'')+(avail?'':' dur-disabled');
+    const onclick=avail?`onclick="selectDur('${p.id}','${ds}')"`:'' ;
+    const unavailMsg=!avail?`<div style="font-size:11px;color:#C0392B;margin-top:6px">Indisponível neste dia</div>`:'';
+    return `<div class="${cls}" ${onclick}>
+      <div class="dur-icon">${p.icon}</div>
+      <div class="dur-title">${p.title}</div>
+      <div class="dur-desc">${p.desc}<br><span style="font-size:11px;opacity:.7">${p.rule}</span></div>
+      ${unavailMsg}
+    </div>`;
+  }).join('');
+}
+
+window.selectDur = function(d, ds){
+  const warn=document.getElementById('dur-warn');
+  warn.classList.remove('show');
+
+  if(d==='2dias'){
+    const next=addDays(ds,1);
+    // Check next day availability
+    if(!canBookPeriod(next,'dia')){
+      warn.textContent='⚠ O dia seguinte ('+fmtShort(next)+') não está disponível. Escolha outra data para 2 dias.';
+      warn.classList.add('show');
+      return;
+    }
+    selDates=[ds, next];
+    // Update date bar to show both days
+    document.getElementById('dur-date-display').textContent=
+      fmtLong(ds)+' e '+fmtLong(next)+' · 2 dias inteiros · 09h às 17h';
+  } else {
+    selDates=[ds];
+    document.getElementById('dur-date-display').textContent=fmtLong(ds);
+  }
+
+  dur=d;
+  const cfg=DUR_CONFIG[d]; tIni=cfg.ini; tFim=cfg.fim;
+
+  // Re-render cards with selection highlighted
+  renderDurCards(ds);
+  // Mark selected card
+  document.querySelectorAll('.dur-card:not(.dur-disabled)').forEach(card=>{
+    const title=card.querySelector('.dur-title');
+    if(title&&title.textContent==={manha:'Somente manhã',tarde:'Somente tarde',dia:'Dia inteiro','2dias':'2 dias inteiros'}[d])
+      card.classList.add('selected');
+  });
+  document.getElementById('btn-dur').disabled=false;
+}
+
+function buildSelText(){
+  // Used in date bar on form step
+  if(dur==='2dias'&&selDates.length===2)
+    return fmtLong(selDates[0])+' e '+fmtLong(selDates[1]);
+  const horarios={
+    manha:'09h às 12h30 ou 09h às 11h30 (fornecedor)',
+    tarde:'13h30 às 17h ou 13h30 às 16h (fornecedor)',
+    dia:'09h às 17h'
+  };
+  return fmtLong(selDates[0])+' · '+horarios[dur];
+}
+
+function buildSelTextFull(){
+  // Used in summary bar on calendar step
+  const dl={manha:'Manhã · 09h às 12h30',tarde:'Tarde · 13h30 às 17h',dia:'Dia inteiro · 09h às 17h','2dias':'2 dias inteiros · 09h às 17h'};
+  if(dur==='2dias'&&selDates.length===2)
+    return fmtLong(selDates[0])+' e '+fmtLong(selDates[1])+' · '+dl[dur];
+  return fmtLong(selDates[0])+' · '+dl[dur];
+}
+
+function getEffectiveTimes(){
+  const cat = document.getElementById('f-cat') ? document.getElementById('f-cat').value : '';
+  const cfg = DUR_CONFIG[dur];
+  if(!cfg) return {ini:tIni, fim:tFim};
+  const isFornecedor = cat === 'Fornecedor';
+  const ini = isFornecedor && cfg.iniForn ? cfg.iniForn : cfg.ini;
+  const fim = isFornecedor && cfg.fimForn ? cfg.fimForn : cfg.fim;
+  return {ini, fim};
+}
+
+function goToForm(){ document.getElementById('form-date-text').textContent=buildSelText(); setStep(3); show('view-form'); }
+function backToForm(){ setStep(3); show('view-form'); }
+
+// ── STEP 3: FORM ───────────────────────────────────────────────────────
+window.handleUpload = function(inp){
+  if(!inp.files||!inp.files.length) return;
+  const files=Array.from(inp.files); inp.value='';
+  const slots=5-validPhotos.length; if(slots<=0) return;
+  files.slice(0,slots).forEach(file=>{
+    // Check for duplicate: same name + same size in bytes
+    const isDuplicate = validPhotos.some(p =>
+      p.file.name === file.name && p.file.size === file.size
+    );
+    if(isDuplicate){
+      renderPhotoGrid(null, file.name+' já foi adicionada. Foto duplicada não permitida.');
+      return;
+    }
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      if(img.width>=1080&&img.height>=1080){ validPhotos.push({file,url}); renderPhotoGrid(null, null); }
+      else renderPhotoGrid(null, file.name+' — '+img.width+'×'+img.height+'px (mínimo 1080×1080)');
+    };
+    img.src=url;
+  });
+}
+
+function renderPhotoGrid(errName, warnMsg){
+  // Support legacy single-param calls
+  if(errName && !warnMsg) warnMsg = errName;
+  const grid=document.getElementById('photo-grid'), fg=document.getElementById('fg-foto');
+  const count=validPhotos.length, atMax=count>=5;
+  let html=validPhotos.map((p,i)=>`<div class="photo-thumb"><img src="${p.url}"/><button class="ph-remove" onclick="removePhoto(${i})">✕</button></div>`).join('');
+  if(!atMax) html+=`<div class="photo-add" onclick="document.getElementById('f-foto').click()">+</div>`;
+  grid.innerHTML=html;
+  const cEl=document.getElementById('foto-counter');
+  if(cEl){ cEl.textContent=count+'/5 fotos'; cEl.style.color=count>=2?'var(--green)':'var(--caramel)'; cEl.style.display=count>0?'block':'none'; }
+  document.getElementById('upload-zone').style.display=count?'none':'block';
+  if(warnMsg){
+    const d=document.createElement('div'); d.style.cssText='font-size:12px;color:#C0392B;margin-top:6px;';
+    d.textContent='⚠ '+warnMsg; grid.appendChild(d); setTimeout(()=>d.remove(),6000);
+  }
+  if(count>=2) fg.classList.remove('field-err');
+}
+
+window.removePhoto = function(idx){ URL.revokeObjectURL(validPhotos[idx].url); validPhotos.splice(idx,1); renderPhotoGrid(null); if(!validPhotos.length) document.getElementById('upload-zone').style.display='block'; }
+
+window.updateDescCount = function(){
+  const len=document.getElementById('f-desc').value.trim().length;
+  const el=document.getElementById('desc-count'); el.textContent=len;
+  el.style.color=len>=500?'var(--green)':len>=300?'var(--caramel)':'var(--text-muted)';
+  if(len>=500) document.getElementById('fg-desc').classList.remove('field-err');
+}
+
+function checkFornecedor(){
+  const cat = document.getElementById('f-cat').value;
+  const fg = document.getElementById('fg-fornecedor');
+  const inp = document.getElementById('f-fornecedor');
+  if(cat === 'Fornecedor'){
+    fg.style.display = 'block';
+  } else {
+    fg.style.display = 'none';
+    inp.value = '';
+    fg.classList.remove('field-err');
+  }
+}
+
+function validate(){
+  const checks=[
+    {id:'fg-nome', ok:()=>document.getElementById('f-nome').value.trim()},
+    {id:'fg-email',ok:()=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById('f-email').value)},
+    {id:'fg-cat',  ok:()=>document.getElementById('f-cat').value},
+    {id:'fg-tipo', ok:()=>document.getElementById('f-tipo').value},
+    {id:'fg-fornecedor', ok:()=>document.getElementById('f-cat').value!=='Fornecedor'||document.getElementById('f-fornecedor').value.trim()},
+    {id:'fg-valor',ok:()=>document.getElementById('f-valor').value&&parseFloat(document.getElementById('f-valor').value)>0},
+    {id:'fg-titulo',ok:()=>document.getElementById('f-titulo').value.trim()},
+    {id:'fg-desc', ok:()=>document.getElementById('f-desc').value.trim().length>=500},
+    {id:'fg-foto', ok:()=>validPhotos.length>=2&&validPhotos.length<=5},
+  ];
+  let ok=true;
+  checks.forEach(c=>{ const el=document.getElementById(c.id); if(!c.ok()){el.classList.add('field-err');ok=false;}else el.classList.remove('field-err'); });
+  return ok;
+}
+
+// Re-reads Firestore and checks whether the selected dates/period are still free.
+// Returns {ok:true} or {ok:false, msg}. Always refreshes local state with what it read,
+// so the calendar the instructor goes back to is already up to date.
+async function checkSlotStillAvailable(){
+  // Reload bookings AND admin-blocked/released dates
+  // Produção: relê as três coleções do Firestore para detectar conflito de última hora
+  const fresh = DemoStore.getAll();
+  const freshBookings = fresh.agendamentos.filter(b=>b.status!=='reprovado');
+  const freshBlocked  = fresh.datas_bloqueadas;
+  const freshReleased = fresh.datas_liberadas;
+
+  // Refresh local state regardless of the outcome
+  allBookings   = freshBookings;
+  blockedDates  = freshBlocked;
+  releasedDates = freshReleased;
+
+  const datesToCheck = dur==='2dias' ? [selDates[0], selDates[1]] : [selDates[0]];
+
+  // 1) Did the admin block the chosen period in the meantime?
+  for(const ds of datesToCheck){
+    const blk = getBlockedPeriods(ds, freshBlocked);
+    const hitsChosenPeriod =
+      blk.full ||
+      (dur==='manha' && blk.am) ||
+      (dur==='tarde' && blk.pm) ||
+      ((dur==='dia'||dur==='2dias') && blk.any);
+    if(hitsChosenPeriod){
+      // Only mention the entries that actually collide with what was chosen
+      const relevant = freshBlocked.filter(b=>{
+        if(b.date!==ds) return false;
+        const p = b.periodo || 'dia';
+        if(p==='dia') return true;
+        if(dur==='dia'||dur==='2dias') return true;
+        return p===dur;
+      });
+      const motivos = relevant.map(b=>b.reason).filter(Boolean);
+      const motivo = motivos.length ? '\n\nMotivo: ' + motivos.join(' | ') : '';
+      const quais = blk.full ? 'Esta data foi bloqueada'
+                  : (blk.am ? 'A manhã desta data foi bloqueada' : 'A tarde desta data foi bloqueada');
+      return { ok:false, msg:'⚠️ ' + quais + ' pela administração e não está mais disponível para agendamento.' + motivo + '\n\nPor favor volte ao calendário e escolha outra data ou período disponível.' };
+    }
+  }
+
+  // Helper: does `period` collide with an existing booking on that date?
+  function hasConflict(ds, period){
+    const onDay = freshBookings.filter(b => b.data===ds || (b.data2&&b.data2===ds));
+    for(const b of onDay){
+      const bd = b.duracao;
+      // Any existing full-day or 2-day blocks everything
+      if(bd==='dia'||bd==='2dias') return true;
+      // New full-day or 2-day blocked by any existing booking
+      if(period==='dia'||period==='2dias') return true;
+      // Same period conflicts
+      if(bd==='manha' && period==='manha') return true;
+      if(bd==='tarde' && period==='tarde') return true;
+    }
+    return false;
+  }
+
+  // 2) Did another instructor take the slot in the meantime?
+  for(const ds of datesToCheck){
+    if(hasConflict(ds, dur)){
+      return { ok:false, msg:'⚠️ Ops! Esta data/período acabou de ser reservado por outro instrutor enquanto você preenchia o formulário.\n\nPor favor volte ao calendário e escolha outra data disponível.' };
+    }
+  }
+
+  return { ok:true };
+}
+
+window.submitForm = async function(){
+  if(!validate()){ document.querySelector('.field-err')?.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+
+  // Early availability check — fast feedback before spending minutes uploading photos.
+  // The result is captured OUTSIDE the try so that a later crash can never let a
+  // conflicting booking slip through to the save.
+  setLoadingText('Verificando disponibilidade...');
+  let earlyCheck = null;
+  try {
+    earlyCheck = await checkSlotStillAvailable();
+  } catch(e){ console.warn('Erro na verificação em tempo real:', e); }
+  if(earlyCheck && !earlyCheck.ok){
+    hideLoading();
+    alert(earlyCheck.msg);
+    window.backToCal();
+    return;
+  }
+
+  // Check monthly limit: max 5 courses per instructor per month
+  const instructorEmail = document.getElementById('f-email').value.trim().toLowerCase();
+  const [bookYear, bookMonth] = selDates[0].split('-');
+  const monthKey = bookYear + '-' + bookMonth;
+  const monthlyCount = allBookings.filter(b =>
+    b.email && b.email.toLowerCase() === instructorEmail &&
+    b.status !== 'reprovado' &&
+    b.data && b.data.startsWith(monthKey)
+  ).length;
+
+  if(monthlyCount >= 5){
+    const [y,m] = monthKey.split('-');
+    const monthName = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][parseInt(m)-1];
+    alert('Você já possui 5 cursos agendados em ' + monthName + ' de ' + y + '.\nEste é o limite máximo permitido por instrutor por mês.');
+    return;
+  }
+
+  showLoading('Enviando fotos...');
+  try {
+    // Upload all photos to Cloudinary
+    const photoUrls=[];
+    for(let i=0;i<validPhotos.length;i++){
+      setLoadingText(`Enviando foto ${i+1} de ${validPhotos.length}...`);
+      const url=await uploadPhoto(validPhotos[i].file);
+      photoUrls.push(url);
+    }
+    // FINAL availability check — photo upload can take minutes, and the slot may have
+    // been taken in that window. Re-checking here keeps the gap to the write in the
+    // hundreds of milliseconds instead of the whole upload.
+    setLoadingText('Confirmando disponibilidade...');
+    const finalCheck = await checkSlotStillAvailable();
+    if(!finalCheck.ok){
+      hideLoading();
+      alert(finalCheck.msg);
+      window.backToCal();
+      return;
+    }
+
+    setLoadingText('Salvando solicitação...');
+    const dl={manha:'Somente manhã',tarde:'Somente tarde',dia:'Dia inteiro','2dias':'2 dias inteiros'};
+    const booking={
+      data:selDates[0], data2:selDates[1]||null,
+      duracao:dur, horaInicio:getEffectiveTimes().ini, horaFim:getEffectiveTimes().fim,
+      nome:document.getElementById('f-nome').value.trim(),
+      email:document.getElementById('f-email').value.trim(),
+      categoria:document.getElementById('f-cat').value,
+      tipo_curso:document.getElementById('f-tipo').value,
+      nome_fornecedor:document.getElementById('f-cat').value==='Fornecedor'?document.getElementById('f-fornecedor').value.trim():'',
+      titulo:document.getElementById('f-titulo').value.trim(),
+      descricao:document.getElementById('f-desc').value.trim(),
+      valor:parseFloat(document.getElementById('f-valor').value),
+      fotos:photoUrls,
+      status:'pendente',
+      criadoEm:new Date().toISOString(),
+    };
+    booking.id=DemoStore.add('agendamentos',booking);
+    allBookings.push(booking);
+
+    // Send notification email to admin
+    setLoadingText('Enviando notificação...');
+    let dateText=fmtLong(booking.data); if(booking.data2) dateText+=' e '+fmtLong(booking.data2);
+    // Produção: EmailJS avisa o administrador (template 1) com nome, curso, data, horário, categoria e valor
+    try { await DemoStore.sendEmail('administrador', 'nova solicitação de '+booking.nome); }
+    catch(emailErr){ console.warn('Erro ao enviar e-mail de notificação:', emailErr); }
+
+    hideLoading();
+    document.getElementById('success-details').innerHTML=`
+      <div class="sd-row"><span>Data</span><span>${dateText}</span></div>
+      <div class="sd-row"><span>Horário</span><span>${booking.horaInicio}h às ${booking.horaFim}h</span></div>
+      <div class="sd-row"><span>Duração</span><span>${dl[booking.duracao]}</span></div>
+      <div class="sd-row"><span>Curso</span><span>${booking.titulo}</span></div>
+      <div class="sd-row"><span>Categoria</span><span>${booking.categoria}</span></div>
+      <div class="sd-row"><span>Tipo</span><span>${booking.tipo_curso}</span></div>
+      ${booking.nome_fornecedor?`<div class="sd-row"><span>Fornecedor</span><span>${booking.nome_fornecedor}</span></div>`:''}
+      <div class="sd-row"><span>Valor</span><span>R$ ${booking.valor.toFixed(2)}</span></div>
+      <div class="sd-row"><span>Fotos</span><span>${photoUrls.length} foto(s) enviada(s)</span></div>
+      <div class="sd-row"><span>Status</span><span style="color:var(--caramel)">Aguardando aprovação</span></div>
+    `;
+    setStep(4); show('view-success');
+  } catch(e){
+    hideLoading();
+    alert('Erro ao enviar solicitação. Por favor tente novamente.\n'+e.message);
+  }
+}
+
+window.resetAll = function(){
+  dur=null; tIni=null; tFim=null; selDates=[]; waitD2=false; selectedCalDate=null;
+  document.getElementById('btn-dur').disabled=true;
+  ['f-nome','f-email','f-titulo','f-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-cat').value=''; document.getElementById('f-valor').value='';
+  document.getElementById('f-tipo').value=''; document.getElementById('f-fornecedor').value='';
+  document.getElementById('fg-fornecedor').style.display='none';
+  document.getElementById('f-foto').value='';
+  validPhotos.forEach(p=>URL.revokeObjectURL(p.url)); validPhotos=[];
+  document.getElementById('photo-grid').innerHTML='';
+  document.getElementById('upload-zone').style.display='block';
+  document.getElementById('foto-counter').style.display='none';
+  setStep(1); show('view-cal'); renderCal();
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────
+function show(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function setStep(n){ for(let i=1;i<=4;i++){ const el=document.getElementById('step'+i); el.classList.remove('active','done'); if(i<n)el.classList.add('done'); else if(i===n)el.classList.add('active'); } }
+function showLoading(txt){ document.getElementById('loading-overlay').classList.add('show'); setLoadingText(txt); }
+function hideLoading(){ document.getElementById('loading-overlay').classList.remove('show'); }
+function setLoadingText(txt){ document.getElementById('loading-text').textContent=txt; }
+
+// ── EXPOSE ALL TO GLOBAL SCOPE ────────────────────────────────────────
+window.goToForm       = goToForm;
+window.checkFornecedor = checkFornecedor;
+window.backToCal      = backToCal;
+window.selectDur      = selectDur;
+window.renderCal      = renderCal;
+window.goToForm       = goToForm;
+window.checkFornecedor = checkFornecedor;
+window.show           = show;
+window.setStep        = setStep;
+window.showLoading    = showLoading;
+window.hideLoading    = hideLoading;
+window.setLoadingText = setLoadingText;
+window.updateDescCount= updateDescCount;
+window.handleUpload   = handleUpload;
+window.removePhoto    = removePhoto;
+window.submitForm     = submitForm;
+window.resetAll       = resetAll;
+
+// Init
+await loadBookings();
+// Recalculate first available month after data loads (blocked dates may affect it)
+const _today2=new Date(); _today2.setHours(0,0,0,0);
+const _min2=new Date(_today2); _min2.setDate(_min2.getDate()+20);
+calCur=new Date(_min2.getFullYear(),_min2.getMonth(),1);
+renderCal();
+</script>
+</body>
+</html>

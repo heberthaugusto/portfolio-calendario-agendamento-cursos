@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Ateliê Cacau (demo)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:#F9F5EF;--warm:#EDE4D5;--caramel:#C4894A;--caramel-dark:#9E6A2E;
+  --chocolate:#3D1F0A;--text:#2A1505;--text-muted:#8B6A4E;
+  --border:rgba(61,31,10,0.12);--border-strong:rgba(61,31,10,0.25);
+  --radius:12px;--radius-sm:8px;--green:#2D7A4F;--green-bg:#EAF5EF;
+  --red:#C0392B;--red-bg:#FEF0EE;--amber:#C4894A;--amber-bg:#FDF3E7;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+header{background:#5C3317;padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;min-height:88px;position:relative;}
+.header-left{display:flex;align-items:center;gap:1rem;}
+
+.admin-badge{background:rgba(196,137,74,.3);border:0.5px solid var(--caramel);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--caramel);}
+.logout-btn{background:none;border:0.5px solid rgba(255,255,255,.2);border-radius:var(--radius-sm);padding:5px 14px;font-size:12px;color:rgba(255,255,255,.6);cursor:pointer;}
+.logout-btn:hover{background:rgba(255,255,255,.1);color:white;}
+.container{max-width:1000px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+.page-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:var(--chocolate);}
+
+.filters{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center;}
+.filter-btn{padding:7px 16px;border-radius:20px;border:0.5px solid var(--border-strong);background:white;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;color:var(--text-muted);transition:all .15s;}
+.filter-btn:hover{background:var(--warm);}
+.filter-btn.active{background:var(--chocolate);color:white;border-color:var(--chocolate);}
+.filter-sep{width:1px;height:24px;background:var(--border);}
+#month-filter{font-family:'DM Sans',sans-serif;color:var(--text-muted);background:white;border:0.5px solid var(--border-strong);border-radius:20px;outline:none;}
+.table-wrap{background:white;border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.table-head{display:grid;grid-template-columns:1.6fr 1fr 1fr 0.8fr 0.8fr 1.2fr;padding:12px 1.25rem;background:var(--warm);border-bottom:0.5px solid var(--border);font-size:11px;font-weight:500;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;}
+.booking-row{display:grid;grid-template-columns:1.6fr 1fr 1fr 0.8fr 0.8fr 1.2fr;padding:14px 1.25rem;border-bottom:0.5px solid var(--border);align-items:center;transition:background .1s;}
+.booking-row:last-child{border-bottom:none;}
+.booking-row:hover{background:var(--cream);}
+.curso-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.curso-instrutor{font-size:12px;color:var(--text-muted);}
+.cat-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+.cat-choc{background:#F5EAE1;color:#7A3A10;}
+.cat-conf{background:#F9EAF1;color:#8B2252;}
+.cat-salg{background:#EAF3E8;color:#2A6B25;}
+.cat-forn{background:#E8EEF9;color:#1E3A8A;}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+.st-pendente{background:var(--amber-bg);color:var(--amber);}
+.st-aprovado{background:var(--green-bg);color:var(--green);}
+.st-reprovado{background:var(--red-bg);color:var(--red);}
+.actions{display:flex;gap:6px;flex-wrap:wrap;}
+.act-btn{padding:5px 12px;border-radius:var(--radius-sm);border:0.5px solid;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;}
+.act-approve{border-color:var(--green);color:var(--green);background:var(--green-bg);}
+.act-approve:hover{background:var(--green);color:white;}
+.act-reject{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+.act-reject:hover{background:var(--red);color:white;}
+.act-detail{border-color:var(--border-strong);color:var(--text-muted);background:white;}
+.act-detail:hover{background:var(--warm);}
+.act-cancel{border-color:#E65100;color:#E65100;background:#FFF3E0;}
+.act-cancel:hover{background:#E65100;color:white;}
+.empty-state{padding:4rem 2rem;text-align:center;color:var(--text-muted);}
+.empty-icon{font-size:40px;margin-bottom:1rem;opacity:.4;}
+.empty-title{font-size:16px;font-weight:500;margin-bottom:4px;color:var(--text);}
+/* REJECT REASON MODAL */
+.reject-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:200;padding:1.5rem;}
+.reject-overlay.open{display:flex;}
+.reject-box{background:white;border-radius:var(--radius);padding:1.75rem;max-width:480px;width:100%;}
+.reject-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--chocolate);margin-bottom:.5rem;}
+.reject-subtitle{font-size:13px;color:var(--text-muted);margin-bottom:1rem;}
+.reject-textarea{width:100%;font-family:'DM Sans',sans-serif;font-size:14px;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);outline:none;resize:vertical;min-height:100px;transition:border-color .15s;}
+.reject-textarea:focus{border-color:var(--red);}
+.reject-actions{display:flex;gap:10px;margin-top:1rem;justify-content:flex-end;}
+.reject-confirm{background:var(--red);color:white;border:none;border-radius:var(--radius-sm);padding:9px 20px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;}
+.reject-confirm:hover{opacity:.85;}
+.reject-cancel{background:none;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:9px 16px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;color:var(--text-muted);}
+.reject-cancel:hover{background:var(--warm);}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:1.5rem;}
+.modal-overlay.open{display:flex;}
+.modal{background:white;border-radius:var(--radius);padding:2rem;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--chocolate);margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:0.5px solid var(--border);}
+.detail-row{display:flex;gap:1rem;padding:10px 0;border-bottom:0.5px solid var(--border);font-size:14px;}
+.detail-row:last-of-type{border-bottom:none;}
+.detail-key{color:var(--text-muted);min-width:120px;flex-shrink:0;font-size:13px;}
+.detail-val{color:var(--text);line-height:1.6;}
+.modal-actions{display:flex;gap:10px;margin-top:1.5rem;padding-top:1.25rem;border-top:0.5px solid var(--border);flex-wrap:wrap;}
+.modal-close{margin-left:auto;background:none;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:8px 16px;font-size:14px;cursor:pointer;color:var(--text-muted);font-family:'DM Sans',sans-serif;}
+.modal-close:hover{background:var(--warm);}
+/* PHOTO GALLERY IN MODAL */
+.photo-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:8px;}
+.photo-item{position:relative;aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;border:0.5px solid var(--border);}
+.photo-item img{width:100%;height:100%;object-fit:cover;transition:transform .2s;}
+.photo-item:hover img{transform:scale(1.05);}
+.photo-item-btns{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:8px;opacity:0;transition:all .2s;}
+.photo-item:hover .photo-item-btns{background:rgba(0,0,0,.45);opacity:1;}
+.ph-btn{padding:5px 10px;border-radius:var(--radius-sm);border:none;font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:4px;}
+.ph-btn-view{background:white;color:var(--chocolate);}
+.ph-btn-dl{background:var(--caramel);color:white;}
+.dl-all-btn{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:7px 16px;background:var(--chocolate);color:white;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
+.dl-all-btn:hover{background:var(--caramel-dark);}
+/* BLOCKED DATES */
+.block-panel{background:white;border:0.5px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-top:2rem;}
+.block-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--chocolate);margin-bottom:1rem;}
+.block-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem;}
+.block-input{font-family:'DM Sans',sans-serif;font-size:14px;background:var(--cream);border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);outline:none;}
+.block-input:focus{border-color:var(--caramel);}
+.block-add-btn{padding:8px 18px;background:var(--chocolate);color:white;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;}
+.block-add-btn:hover{background:var(--caramel-dark);}
+.blocked-list{display:flex;flex-wrap:wrap;gap:8px;}
+.blocked-tag{display:flex;align-items:center;gap:6px;background:var(--red-bg);border:0.5px solid var(--red);border-radius:20px;padding:4px 12px;font-size:13px;color:var(--red);}
+.blocked-tag button{background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;line-height:1;padding:0;}
+.mini-day.admin-blocked{background:#FDECEA;border:1.5px solid #EF9A9A;}
+/* LIBERAR DATAS */
+.release-tag{display:flex;align-items:center;gap:6px;background:#E8F5E9;border:0.5px solid #81C784;border-radius:20px;padding:4px 12px;font-size:13px;color:#2E7D32;}
+.release-tag button{background:none;border:none;cursor:pointer;color:#2E7D32;font-size:14px;line-height:1;padding:0;}
+.block-add-btn.release{background:var(--green);}
+.block-add-btn.release:hover{background:#1B5E20;}
+/* CALENDAR VIEW */
+.cal-view-wrap{margin-top:2.5rem;}
+.cal-view-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--chocolate);margin-bottom:1rem;}
+/* ADMIN CALENDAR - identical to instructor calendar */
+.admin-cal-wrap .cal-card{background:white;border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.admin-cal-wrap .cal-head{background:var(--chocolate);padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;}
+.admin-cal-wrap .cal-month-label{font-family:'Cormorant Garamond',serif;font-size:22px;color:white;}
+.admin-cal-wrap .cal-nav-btn{background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:var(--radius-sm);width:34px;height:34px;color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.admin-cal-wrap .cal-nav-btn:hover{background:rgba(255,255,255,.25);}
+.admin-cal-wrap .cal-body{padding:1.25rem 1.5rem 1rem;}
+.admin-cal-wrap .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;}
+.admin-cal-wrap .cal-weekday{text-align:center;font-size:11px;font-weight:500;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;padding:4px 0;}
+.admin-cal-wrap .cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.admin-cal-wrap .cal-day{min-height:58px;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;padding:6px 3px 4px;cursor:default;border:0.5px solid transparent;transition:all .15s;overflow:hidden;}
+.admin-cal-wrap .cal-day.empty{cursor:default;}
+.admin-cal-wrap .cal-day.past{opacity:.35;}
+.admin-cal-wrap .cal-day.blocked-day{background:var(--warm);}
+.admin-cal-wrap .cal-day.admin-blocked{background:#FDECEA;border:1.5px solid #EF9A9A;}
+.admin-cal-wrap .cal-day.admin-blocked .day-num{color:#C62828;}
+.admin-cal-wrap .cal-day.has-pending{background:#FFF3E0;border:1.5px solid #FFB74D;}
+.admin-cal-wrap .cal-day.has-approved{background:#E8F5E9;border:1.5px solid #81C784;}
+.admin-cal-wrap .cal-day.has-pending.has-approved{background:#FFF3E0;border:1.5px solid #FFB74D;}
+/* Partial admin block: keeps the booking colour but flags the block with a red border.
+   Class repeated to outrank the combined .has-pending.has-approved border rule above. */
+.admin-cal-wrap .cal-day.partial-blocked.partial-blocked{border:1.5px solid #EF9A9A;}
+.admin-cal-wrap .day-num{font-size:13px;line-height:1;color:var(--text);}
+.admin-cal-wrap .cal-day.past .day-num{color:var(--text-muted);}
+.admin-cal-wrap .day-avail{width:100%;display:flex;flex-direction:column;gap:1px;margin-top:2px;}
+.admin-cal-wrap .avail-label{font-size:9px;font-weight:500;text-align:center;border-radius:3px;padding:1px 2px;line-height:1.3;}
+.admin-cal-wrap .avail-manha{background:rgba(255,255,255,0.7);color:#2E7D32;}
+.admin-cal-wrap .avail-tarde{background:rgba(255,255,255,0.7);color:#1565C0;}
+.admin-cal-wrap .cal-legend{display:flex;gap:10px;flex-wrap:wrap;padding:.875rem 1.5rem;border-top:0.5px solid var(--border);background:var(--cream);}
+.admin-cal-wrap .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);}
+.admin-cal-wrap .legend-swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+/* events list */
+.mini-events-list{padding:0 1rem 1rem;display:flex;flex-direction:column;gap:6px;}
+.mini-event{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--radius-sm);background:var(--cream);border:0.5px solid var(--border);font-size:13px;flex-wrap:wrap;}
+.me-time{font-weight:500;min-width:42px;color:var(--chocolate);}
+.me-name{flex:1;color:var(--text);}
+/* LOGIN */
+.login-overlay{position:fixed;inset:0;background:var(--chocolate);display:flex;align-items:center;justify-content:center;z-index:999;padding:1.5rem;}
+.login-box{background:var(--cream);border-radius:var(--radius);padding:2.5rem 2rem;width:100%;max-width:380px;text-align:center;}
+.login-logo{width:56px;height:56px;background:var(--caramel);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:28px;color:white;font-weight:600;margin:0 auto 1.25rem;}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:var(--chocolate);margin-bottom:.25rem;}
+.login-sub{font-size:13px;color:var(--text-muted);margin-bottom:2rem;}
+.login-input{width:100%;font-family:'DM Sans',sans-serif;font-size:15px;background:white;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:12px 16px;color:var(--text);outline:none;text-align:center;letter-spacing:.15em;margin-bottom:12px;}
+.login-input:focus{border-color:var(--caramel);}
+.login-btn{width:100%;background:var(--caramel);color:white;border:none;border-radius:var(--radius-sm);padding:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;}
+.login-btn:hover{background:var(--caramel-dark);}
+.login-err{font-size:13px;color:#C0392B;margin-top:10px;display:none;}
+.login-err.show{display:block;}
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">A</div>
+    <div class="login-title">Ateliê Cacau</div>
+    <div class="login-sub">Painel administrativo — acesso restrito</div>
+    <div style="font-size:12px;color:var(--text-muted);background:var(--warm);border-radius:8px;padding:8px 12px;margin-bottom:12px;line-height:1.5">Modo demonstração. Use <strong>admin@demo.com</strong> e senha <strong>demo1234</strong>, ou clique em Entrar com os campos já preenchidos.</div>
+    <input class="login-input" type="email" id="login-email" value="admin@demo.com" placeholder="seu@email.com" style="margin-bottom:8px;letter-spacing:normal" onkeydown="if(event.key==='Enter')tryLogin()" />
+    <input class="login-input" type="password" id="login-pwd" value="demo1234" placeholder="••••••••" onkeydown="if(event.key==='Enter')tryLogin()" />
+    <button class="login-btn" onclick="tryLogin()">Entrar</button>
+    <div class="login-err" id="login-err">E-mail ou senha incorretos. Tente novamente.</div>
+  </div>
+</div>
+
+<!-- REJECT REASON MODAL -->
+<div class="reject-overlay" id="reject-overlay">
+  <div class="reject-box">
+    <div class="reject-title">❌ Reprovar solicitação</div>
+    <div class="reject-subtitle" id="reject-subtitle">Informe o motivo da reprovação. Ele será enviado por e-mail ao instrutor.</div>
+    <textarea class="reject-textarea" id="reject-reason" placeholder="Ex: A data solicitada conflita com outro evento já confirmado. Por favor escolha outra data disponível no calendário..."></textarea>
+    <div class="reject-actions">
+      <button class="reject-cancel" onclick="closeRejectModal()">Cancelar</button>
+      <button class="reject-confirm" onclick="confirmReject()">Reprovar e enviar e-mail</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <!-- Logo absolutely centered -->
+  <div style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;">
+    <div style="text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#fff;letter-spacing:.04em;line-height:1">Ateliê Cacau</div><div style="font-size:10px;color:rgba(255,255,255,.7);letter-spacing:.2em;text-transform:uppercase;margin-top:4px">Escola de confeitaria</div></div>
+  </div>
+  <!-- Right side buttons -->
+  <div style="margin-left:auto;display:flex;align-items:center;gap:12px;position:relative;z-index:1;">
+    <span style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:.1em;text-transform:uppercase;">Painel Administrativo</span>
+    <div class="admin-badge">Admin</div>
+    <button class="logout-btn" onclick="logout()">Sair</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Solicitações de agendamento</h1>
+    <button class="filter-btn" onclick="loadData()" style="border-color:var(--caramel);color:var(--caramel)">↻ Atualizar</button>
+    <button class="filter-btn" onclick="exportMonth()" style="border-color:var(--green);color:var(--green)" id="btn-export">⬇ Exportar mês</button>
+  </div>
+
+
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('pendente',this)">Pendentes</button>
+    <button class="filter-btn" onclick="setFilter('aprovado',this)">Aprovados</button>
+    <button class="filter-btn" onclick="setFilter('reprovado',this)">Reprovados</button>
+    <button class="filter-btn" onclick="setFilter('historico',this)">Todos</button>
+    <div class="filter-sep"></div>
+    <button class="filter-btn" onclick="setFilter('Chocolateria',this)">🍫</button>
+    <button class="filter-btn" onclick="setFilter('Confeitaria',this)">🎂</button>
+    <button class="filter-btn" onclick="setFilter('Salgados',this)">🥐</button>
+    <button class="filter-btn" onclick="setFilter('Fornecedor',this)">🏪</button>
+    <div class="filter-sep"></div>
+    <select id="month-filter" class="filter-btn" onchange="setMonthFilter(this.value)" style="cursor:pointer;padding-right:8px;">
+      <option value="">Todos os meses</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-head">
+      <div>Curso / Instrutor</div><div>Data</div><div>Duração</div>
+      <div>Categoria</div><div>Valor</div><div>Ações</div>
+    </div>
+    <div id="bookings-list"><div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Carregando...</div></div></div>
+  </div>
+
+  <div class="cal-view-wrap admin-cal-wrap">
+    <div class="cal-card">
+      <div class="cal-head">
+        <button class="cal-nav-btn" onclick="changeAdminMonth(-1)">&#8249;</button>
+        <span class="cal-month-label" id="admin-cal-label"></span>
+        <button class="cal-nav-btn" onclick="changeAdminMonth(1)">&#8250;</button>
+      </div>
+      <div class="cal-body">
+        <div class="cal-weekdays" id="admin-cal-weekdays"></div>
+        <div class="cal-days" id="admin-cal-grid"></div>
+      </div>
+      <div class="cal-legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#FFF3E0;border:1.5px solid #FFB74D"></div> Reservado — pendente</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#E8F5E9;border:1.5px solid #81C784"></div> Confirmado</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#FDECEA;border:1.5px solid #EF9A9A"></div> Data bloqueada</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--warm);border:0.5px solid var(--border-strong)"></div> Indisponível</div>
+        <div class="legend-item" style="font-size:10px;color:var(--text-muted)">Texto <span style="color:#2E7D32;font-weight:500">manhã</span> / <span style="color:#1565C0;font-weight:500">tarde</span> = período livre</div>
+      </div>
+    </div>
+    <div class="mini-events-list" id="admin-events-list" style="margin-top:1rem;padding:0"></div>
+  </div>
+  <!-- BLOCKED DATES PANEL -->
+  <div class="block-panel">
+    <div class="block-title">Bloquear datas</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:1rem">Adicione datas indisponíveis para agendamento (feriados, eventos, etc.). É possível bloquear o dia inteiro ou apenas um turno.</p>
+    <div class="block-form">
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Data</div>
+        <input type="date" class="block-input" id="block-date" />
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Período</div>
+        <select class="block-input" id="block-periodo" style="cursor:pointer">
+          <option value="dia">Dia inteiro</option>
+          <option value="manha">Somente manhã</option>
+          <option value="tarde">Somente tarde</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Motivo (opcional)</div>
+        <input type="text" class="block-input" id="block-reason" placeholder="Ex: Feriado nacional" style="width:100%" />
+      </div>
+      <button class="block-add-btn" onclick="addBlockedDate()">Bloquear data</button>
+    </div>
+    <div class="blocked-list" id="blocked-list"></div>
+  </div>
+
+  <!-- LIBERAR DATAS DENTRO DO PRAZO -->
+  <div class="block-panel" style="border-color:#81C784">
+    <div class="block-title" style="color:#2E7D32">Liberar datas antecipadas</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:1rem">Libere datas dentro do prazo de 20 dias para agendamento excepcional de instrutores.</p>
+    <div class="block-form">
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Data a liberar</div>
+        <input type="date" class="block-input" id="release-date" />
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Motivo (opcional)</div>
+        <input type="text" class="block-input" id="release-reason" placeholder="Ex: Curso urgente" style="width:100%" />
+      </div>
+      <button class="block-add-btn release" onclick="addReleasedDate()">Liberar data</button>
+    </div>
+    <div class="blocked-list" id="released-list"></div>
+  </div>
+
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<!-- MODO DEMONSTRAÇÃO: substitui Firebase (Firestore + Auth) e EmailJS por armazenamento local -->
+<script src="demo-store.js"></script>
+<script type="module">
+DemoStore.banner('Portal do instrutor em <a href="instrutores.html" style="color:#9E6A2E;font-weight:500">instrutores.html</a>.');
+
+const MONTHS_PT=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const WD=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+let allBookings=[];
+let blockedDates=[];
+let releasedDates=[];
+let currentFilter='pendente';
+let adminCur=new Date(); adminCur.setDate(1);
+
+// ── AUTH ──────────────────────────────────────────────────────────────
+// Produção: Firebase Authentication (e-mail e senha) com onAuthStateChanged.
+// Demo: credencial fixa validada localmente.
+async function applyAuthState(){
+  if(DemoStore.isLogged()){
+    document.getElementById('login-overlay').style.display='none';
+    await loadData();
+  } else {
+    document.getElementById('login-overlay').style.display='flex';
+  }
+}
+window.tryLogin = async function(){
+  const email = document.getElementById('login-email').value.trim();
+  const pwd   = document.getElementById('login-pwd').value;
+  const err   = document.getElementById('login-err');
+  err.classList.remove('show');
+  if(DemoStore.login(email, pwd)){ await applyAuthState(); }
+  else {
+    err.classList.add('show');
+    document.getElementById('login-pwd').value='';
+    document.getElementById('login-pwd').focus();
+  }
+}
+window.logout = async function(){ DemoStore.logout(); await applyAuthState(); }
+applyAuthState();
+
+
+// ── DATA ───────────────────────────────────────────────────────────────
+window.loadData = async function(){
+  try {
+    // Produção: três coleções do Firestore
+    const d = DemoStore.getAll();
+    allBookings = d.agendamentos; blockedDates = d.datas_bloqueadas; releasedDates = d.datas_liberadas;
+    // Abre o calendário no primeiro mês com agendamentos ativos
+    if(!window._adminCalInit){ window._adminCalInit=true;
+      const first=allBookings.filter(b=>b.status!=='reprovado'&&b.data).map(b=>b.data).sort()[0];
+      if(first){ const[y,m]=first.split('-'); adminCur=new Date(+y,+m-1,1); } }
+    renderList(); renderAdminCal(); renderBlockedList(); renderReleasedList(); populateMonthFilter();
+  } catch(e){ console.error(e); alert('Erro ao carregar dados: '+e.message); }
+}
+
+// ── REJECT MODAL ──────────────────────────────────────────────────────
+let _pendingRejectId = null;
+let _pendingCloseModal = false;
+
+window.updateStatus = async function(id, status, fromModal){
+  if(status === 'reprovado'){
+    // Show rejection reason modal instead of confirm
+    const b = allBookings.find(x=>x.id===id);
+    _pendingRejectId = id;
+    _pendingCloseModal = !!fromModal;
+    document.getElementById('reject-reason').value = '';
+    if(b) document.getElementById('reject-subtitle').textContent =
+      'Motivo da reprovação de "'+b.titulo+'". Será enviado por e-mail ao instrutor.';
+    document.getElementById('reject-overlay').classList.add('open');
+    return;
+  }
+  // Approve flow — keep confirm dialog
+  const b = allBookings.find(x=>x.id===id);
+  const msg = b ? '✅ Deseja APROVAR o curso:\n"'+b.titulo+'"?' : '✅ Deseja APROVAR esta solicitação?';
+  if(!confirm(msg)) return;
+  await executeStatus(id, 'aprovado', null, fromModal);
+}
+
+window.closeRejectModal = function(){
+  document.getElementById('reject-overlay').classList.remove('open');
+  _pendingRejectId = null;
+}
+
+window.confirmReject = async function(){
+  if(!_pendingRejectId) return;
+  const reason = document.getElementById('reject-reason').value.trim();
+  document.getElementById('reject-overlay').classList.remove('open');
+  await executeStatus(_pendingRejectId, 'reprovado', reason, _pendingCloseModal);
+  _pendingRejectId = null;
+}
+
+async function executeStatus(id, status, rejectReason, closeAfter){
+  const isApproved = status === 'aprovado';
+  try {
+    const updateData = {status};
+    if(!isApproved && rejectReason){
+      updateData.motivo_reprovacao = rejectReason;
+      updateData.data_reprovacao = new Date().toLocaleDateString('pt-BR');
+    }
+    DemoStore.update('agendamentos',id, updateData);
+    const idx=allBookings.findIndex(b=>b.id===id);
+    if(idx>-1){
+      allBookings[idx].status=status;
+      if(!isApproved && rejectReason){
+        allBookings[idx].motivo_reprovacao = rejectReason;
+        allBookings[idx].data_reprovacao = new Date().toLocaleDateString('pt-BR');
+      }
+    }
+    renderList(); renderAdminCal();
+
+    // Send result email to instructor
+    const b=allBookings.find(x=>x.id===id);
+    if(b && b.email){
+      let dateText=fmtLong(b.data); if(b.data2) dateText+=' e '+fmtLong(b.data2);
+      // isApproved already declared above
+      const mensagem_resultado = isApproved
+        ? '✅ Sua solicitação foi APROVADA! Sua data está confirmada no calendário.'
+        : '❌ Sua solicitação foi REPROVADA.';
+      const motivo = (!isApproved && rejectReason)
+        ? 'Motivo: '+rejectReason
+        : '';
+      // Produção: EmailJS (template 2) envia ao instrutor resultado, data, horário, motivo da reprovação e instruções
+      try { await DemoStore.sendEmail(b.email, (isApproved?'solicitação aprovada':'solicitação reprovada')+(motivo?' ('+motivo+')':'')); }
+      catch(emailErr){ console.warn('Erro ao enviar e-mail de resultado:', emailErr); }
+    }
+    if(closeAfter) closeModal();
+  } catch(e){ alert('Erro ao atualizar: '+e.message); }
+}
+
+// ── CANCEL APPROVAL ───────────────────────────────────────────────────
+window.cancelApproval = async function(id){
+  if(!confirm('Cancelar a aprovação irá liberar esta data no calendário. Deseja continuar?')) return;
+  try {
+    DemoStore.update('agendamentos',id,{status:'reprovado'});
+    const idx=allBookings.findIndex(b=>b.id===id);
+    if(idx>-1){
+      const b=allBookings[idx];
+      allBookings[idx].status='reprovado';
+      // Produção: EmailJS avisa o instrutor que a data foi cancelada e liberada
+      try { await DemoStore.sendEmail(b.email, 'aprovação cancelada'); }
+      catch(e){ console.warn('Erro ao enviar e-mail:', e); }
+    }
+    renderList(); renderAdminCal();
+  } catch(e){ alert('Erro ao cancelar: '+e.message); }
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────
+function catClass(cat){ return {Chocolateria:'cat-choc',Confeitaria:'cat-conf',Salgados:'cat-salg',Fornecedor:'cat-forn'}[cat]||'cat-choc'; }
+function fmtDate(ds){ if(!ds) return '—'; const[y,m,d]=ds.split('-'); return `${d}/${m}/${y}`; }
+function fmtLong(ds){ if(!ds) return '—'; const[y,m,d]=ds.split('-'); const dt=new Date(y,m-1,d); return `${WD[dt.getDay()]}, ${d} de ${MONTHS_PT[m-1]} de ${y}`; }
+function durLabel(d){ return {manha:'Somente manhã',tarde:'Somente tarde',dia:'Dia inteiro','2dias':'2 dias inteiros'}[d]||d; }
+
+
+
+let currentMonth = ''; // 'YYYY-MM' or ''
+
+window.setFilter = function(f, btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn:not(select)').forEach(b=>b.classList.remove('active'));
+  if(btn.tagName !== 'SELECT') btn.classList.add('active');
+  renderList();
+}
+
+window.setMonthFilter = function(val){
+  currentMonth=val;
+  renderList();
+}
+
+function populateMonthFilter(){
+  // Build list of months from bookings, newest first
+  const months = [...new Set(allBookings.filter(b=>b.data).map(b=>{
+    const[y,m]=b.data.split('-'); return y+'-'+m;
+  }))].sort().reverse();
+  const sel=document.getElementById('month-filter');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">📅 Mês</option>';
+  months.forEach(ym=>{
+    const[y,m]=ym.split('-');
+    const label=MONTHS_PT[parseInt(m)-1]+' '+y;
+    sel.innerHTML+=`<option value="${ym}" ${ym===cur?'selected':''}>${label}</option>`;
+  });
+}
+
+function renderList(){
+  const statuses=['pendente','aprovado','reprovado'];
+  const cats=['Chocolateria','Confeitaria','Salgados','Fornecedor'];
+  let filtered=allBookings;
+  if(currentFilter==='historico') filtered=allBookings;
+  else if(statuses.includes(currentFilter)) filtered=allBookings.filter(b=>b.status===currentFilter);
+  else if(cats.includes(currentFilter)) filtered=allBookings.filter(b=>b.categoria===currentFilter);
+  // Apply month filter
+  if(currentMonth){
+    filtered=filtered.filter(b=>b.data.startsWith(currentMonth));
+  }
+  filtered=[...filtered].filter(b=>b.data).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  const container=document.getElementById('bookings-list');
+  if(!filtered.length){ container.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhuma solicitação</div></div>`; return; }
+  container.innerHTML=filtered.map(b=>{
+    let dateText=fmtDate(b.data); if(b.data2) dateText+=' – '+fmtDate(b.data2);
+    return `<div class="booking-row">
+      <div><div class="curso-title">${b.titulo}</div><div class="curso-instrutor">${b.nome}</div><div style="font-size:11px;color:var(--text-muted)">${b.criadoEm ? new Date(b.criadoEm).toLocaleString('pt-BR') : ''}</div></div>
+      <div style="font-size:13px">${dateText}</div>
+      <div style="font-size:12px;color:var(--text-muted)">${durLabel(b.duracao)}<br>${b.horaInicio}h–${b.horaFim}h</div>
+      <div>
+        <span class="cat-badge ${catClass(b.categoria)}">${b.categoria}</span>
+        ${b.tipo_curso?`<span style="font-size:10px;color:var(--text-muted);display:block;margin-top:2px">${b.tipo_curso}</span>`:''}
+        ${b.nome_fornecedor?`<span style="font-size:10px;color:var(--text-muted);display:block">${b.nome_fornecedor}</span>`:''}
+      </div>
+      <div style="font-size:13px;font-weight:500">R$ ${b.valor.toFixed(2)}</div>
+      <div class="actions">
+        ${b.status==='pendente'
+          ? `<button class="act-btn act-approve" onclick="updateStatus('${b.id}','aprovado')">Aprovar</button><button class="act-btn act-reject" onclick="updateStatus('${b.id}','reprovado',false)">Reprovar</button>`
+          : b.status==='aprovado'
+            ? `<span class="status-badge st-aprovado">Aprovado</span><button class="act-btn act-cancel" onclick="cancelApproval('${b.id}')" title="Cancelar aprovação e liberar data">Cancelar</button>`
+            : `<span class="status-badge st-reprovado">Reprovado</span>`
+        }
+        <button class="act-btn act-detail" onclick="showDetail('${b.id}')">Ver</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.showDetail = function(id){
+  const b=allBookings.find(x=>x.id===id); if(!b) return;
+  let dateText=fmtLong(b.data); if(b.data2) dateText+=' e '+fmtLong(b.data2);
+  const fotos=b.fotos||[];
+  const photosHtml=fotos.length?`
+    <div class="photo-gallery">
+      ${fotos.map((url,i)=>`
+        <div class="photo-item">
+          <img src="${url}" loading="lazy"/>
+          <div class="photo-item-btns">
+            <a href="${url}" target="_blank" class="ph-btn ph-btn-view">👁 Ver</a>
+            <button class="ph-btn ph-btn-dl" onclick="downloadPhoto('${url}',${i+1})">⬇ Baixar</button>
+          </div>
+        </div>`).join('')}
+    </div>
+    <button class="dl-all-btn" onclick="downloadAllPhotos(${JSON.stringify(fotos).replace(/"/g,'&quot;')})">⬇ Baixar todas as fotos (${fotos.length})</button>
+  `:'<span style="color:var(--text-muted);font-size:13px">Nenhuma foto enviada</span>';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="modal-title">${b.titulo}</div>
+    <div class="detail-row"><div class="detail-key">Instrutor</div><div class="detail-val">${b.nome}</div></div>
+    <div class="detail-row"><div class="detail-key">E-mail</div><div class="detail-val">${b.email}</div></div>
+    <div class="detail-row"><div class="detail-key">Data</div><div class="detail-val">${dateText}</div></div>
+    <div class="detail-row"><div class="detail-key">Duração</div><div class="detail-val">${durLabel(b.duracao)} · ${b.horaInicio}h às ${b.horaFim}h</div></div>
+    <div class="detail-row"><div class="detail-key">Categoria</div><div class="detail-val">${b.categoria}</div></div>
+    <div class="detail-row"><div class="detail-key">Tipo de curso</div><div class="detail-val">${b.tipo_curso||'—'}</div></div>
+    ${b.nome_fornecedor?`<div class="detail-row"><div class="detail-key">Fornecedor</div><div class="detail-val">${b.nome_fornecedor}</div></div>`:''}
+    <div class="detail-row"><div class="detail-key">Valor</div><div class="detail-val">R$ ${b.valor.toFixed(2)}</div></div>
+    <div class="detail-row"><div class="detail-key">Status</div><div class="detail-val"><span class="status-badge st-${b.status}">${b.status.charAt(0).toUpperCase()+b.status.slice(1)}</span></div></div>
+    <div class="detail-row"><div class="detail-key">Solicitado em</div><div class="detail-val">${b.criadoEm ? new Date(b.criadoEm).toLocaleString('pt-BR') : '—'}</div></div>
+    <div class="detail-row"><div class="detail-key">Descrição</div><div class="detail-val" style="white-space:pre-wrap">${b.descricao}</div></div>
+    ${(b.status==='reprovado') ? `<div class="detail-row"><div class="detail-key" style="color:var(--red)">Motivo reprovação</div><div class="detail-val" style="color:var(--red)">${b.motivo_reprovacao||'<em style="color:var(--text-muted)">Não informado</em>'}<br><span style="font-size:11px;color:var(--text-muted)">${b.data_reprovacao||''}</span></div></div>` : ''}
+    <div class="detail-row"><div class="detail-key">Fotos (${fotos.length})</div><div class="detail-val">${photosHtml}</div></div>
+    <div class="modal-actions">
+      ${b.status==='pendente'
+        ? `<button class="act-btn act-approve" style="padding:8px 18px;font-size:13px" onclick="updateStatus('${b.id}','aprovado').then(()=>closeModal())">Aprovar</button>
+           <button class="act-btn act-reject" style="padding:8px 18px;font-size:13px" onclick="updateStatus('${b.id}','reprovado',true)">Reprovar</button>`
+        : b.status==='aprovado'
+          ? `<button class="act-btn act-cancel" style="padding:8px 18px;font-size:13px" onclick="cancelApproval('${b.id}');closeModal()">Cancelar aprovação e liberar data</button>`
+          : ''
+      }
+      <button class="modal-close" onclick="closeModal()">Fechar</button>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+window.closeModal = function(e){ if(!e||e.target===document.getElementById('modal')) document.getElementById('modal').classList.remove('open'); }
+
+// ── ADMIN CALENDAR ─────────────────────────────────────────────────────
+function toDS(y,m,d){ return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+function getAdminDayOccupancy(ds){
+  const bs=allBookings.filter(b=>b.status!=='reprovado'&&(b.data===ds||(b.data2&&b.data2===ds)));
+  let am=false,pm=false,full=false;
+  bs.forEach(b=>{ if(b.duracao==='dia'||b.duracao==='2dias') full=true; else if(b.duracao==='manha') am=true; else if(b.duracao==='tarde') pm=true; });
+  return {am,pm,full};
+}
+
+function getAdminDayStatus(ds){
+  const bs=allBookings.filter(b=>b.status!=='reprovado'&&(b.data===ds||(b.data2&&b.data2===ds)));
+  let hasPending=false,hasApproved=false,amBooked=false,pmBooked=false,fullBooked=false;
+  bs.forEach(b=>{
+    if(b.status==='pendente') hasPending=true;
+    else if(b.status==='aprovado') hasApproved=true;
+    if(b.duracao==='manha') amBooked=true;
+    else if(b.duracao==='tarde') pmBooked=true;
+    else if(b.duracao==='dia'||b.duracao==='2dias') fullBooked=true;
+  });
+  return {hasPending,hasApproved,amBooked,pmBooked,fullBooked};
+}
+
+function renderAdminCal(){
+  const y=adminCur.getFullYear(),m=adminCur.getMonth();
+  document.getElementById('admin-cal-label').textContent=MONTHS_PT[m]+' '+y;
+  // weekday headers (full names like instructor)
+  document.getElementById('admin-cal-weekdays').innerHTML=WD.map(w=>`<div class="cal-weekday">${w}</div>`).join('');
+  const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
+  const today=new Date(); today.setHours(0,0,0,0);
+  const grid=document.getElementById('admin-cal-grid');
+  let html='';
+  for(let i=0;i<first;i++) html+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=toDS(y,m+1,d);
+    const isPast=new Date(y,m,d)<today;
+    const blk=getBlockedPeriods(ds);
+    const isAdminBlocked=blk.full;            // whole day blocked → red, as before
+    const isPartialBlocked=blk.any&&!blk.full; // one shift blocked only
+    const{am,pm,full}=getAdminDayOccupancy(ds);
+    const{hasPending,hasApproved,amBooked,pmBooked,fullBooked}=getAdminDayStatus(ds);
+    // Merge bookings with admin blocks: a blocked shift is as unavailable as a booked one
+    const amTaken   = amBooked   || blk.am;
+    const pmTaken   = pmBooked   || blk.pm;
+    const fullTaken = fullBooked || blk.full;
+    let cls='cal-day';
+    if(isPast) cls+=' past';
+    else if(isAdminBlocked) cls+=' admin-blocked';
+    else if(fullTaken||(amTaken&&pmTaken)) cls+=' blocked-day';
+    // status colors
+    if(!isPast && !isAdminBlocked){
+      if(hasPending)       cls+=' has-pending';
+      else if(hasApproved) cls+=' has-approved';
+      if(isPartialBlocked) cls+=' partial-blocked';
+    }
+    // availability labels
+    const isSaturday = new Date(y,m,d).getDay() === 6;
+    const isMonday   = new Date(y,m,d).getDay() === 1;
+    const isMondayReleased = isMonday && getReleasedDates().some(r=>r.date===ds);
+    let availHtml='';
+    if(!isPast && !isAdminBlocked && (amTaken||pmTaken) && !fullTaken && !(amTaken&&pmTaken)){
+      availHtml='<div class="day-avail">';
+      // Show manhã on Mondays only if explicitly released
+      availHtml+=(!amTaken && (!isMonday || isMondayReleased))?'<div class="avail-label avail-manha">manhã</div>':'<div style="height:12px"></div>';
+      // Never show "tarde" on Saturdays — afternoon not available
+      availHtml+=(!pmTaken && !isSaturday)?'<div class="avail-label avail-tarde">tarde</div>':'';
+      availHtml+='</div>';
+    }
+    const blockedEntries=getBlockedDates().filter(b=>b.date===ds);
+    const title=blockedEntries.length
+      ? blockedEntries.map(b=>'Bloqueado ('+PERIODO_LABEL[b.periodo||'dia']+')'+(b.reason?': '+b.reason:'')).join(' | ')
+      : '';
+    html+=`<div class="${cls}" ${title?`title="${title}"`:''}><div class="day-num">${d}</div>${availHtml}</div>`;
+  }
+  grid.innerHTML=html;
+  // events list below calendar
+  const active=allBookings.filter(b=>b.status!=='reprovado');
+  const evsList=document.getElementById('admin-events-list');
+  const monthEvs=active.filter(b=>{ const[by,bm]=b.data.split('-'); return parseInt(by)===y&&parseInt(bm)-1===m; }).sort((a,b)=>(a.data||'').localeCompare(b.data||'')||(a.horaInicio||'').localeCompare(b.horaInicio||''));
+  evsList.innerHTML=monthEvs.map(b=>`
+    <div class="mini-event">
+      <div class="me-time">${b.horaInicio}h</div>
+      <div style="font-size:11px;color:var(--text-muted);min-width:52px">${fmtDate(b.data)}${b.data2?' – '+fmtDate(b.data2):''}</div>
+      <div class="me-name">${b.titulo} <span style="color:var(--text-muted);font-size:12px">· ${b.nome}</span></div>
+      <span class="cat-badge ${catClass(b.categoria)}" style="font-size:10px">${b.categoria}</span>
+      <span class="status-badge st-${b.status}" style="font-size:10px;padding:2px 8px">${b.status.charAt(0).toUpperCase()+b.status.slice(1)}</span>
+    </div>`).join('');
+}
+
+window.changeAdminMonth = function(dir){ adminCur.setMonth(adminCur.getMonth()+dir); renderAdminCal(); }
+
+// ── DOWNLOAD ──────────────────────────────────────────────────────────
+window.downloadPhoto = async function(url, index){
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `foto_${index}.jpg`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch(e){ window.open(url,'_blank'); }
+}
+
+window.downloadAllPhotos = async function(fotos){
+  for(let i=0;i<fotos.length;i++){
+    await new Promise(r=>setTimeout(r,500)); // small delay between downloads
+    await downloadPhoto(fotos[i], i+1);
+  }
+}
+
+
+// ── BLOCKED DATES (Firestore) ──────────────────────────────────────────
+function getBlockedDates(){ return blockedDates; }
+
+// Which periods of a date are blocked by the admin.
+// Entries saved before the "periodo" field existed count as full-day blocks.
+function getBlockedPeriods(ds, list){
+  const src = list || blockedDates;
+  let am=false, pm=false;
+  for(const b of src){
+    if(b.date!==ds) continue;
+    const p = b.periodo || 'dia';
+    if(p==='dia'){ am=true; pm=true; }
+    else if(p==='manha') am=true;
+    else if(p==='tarde') pm=true;
+  }
+  return { am, pm, full: am&&pm, any: am||pm };
+}
+
+const PERIODO_LABEL = { dia:'dia inteiro', manha:'manhã', tarde:'tarde' };
+
+window.addBlockedDate = async function(){
+  const dateEl=document.getElementById('block-date');
+  const periodoEl=document.getElementById('block-periodo');
+  const reasonEl=document.getElementById('block-reason');
+  const ds=dateEl.value;
+  const periodo=periodoEl.value||'dia';
+  if(!ds){ dateEl.focus(); return; }
+  // Reject if this period (or the whole day) is already blocked
+  const already=getBlockedPeriods(ds);
+  if(already.full || (periodo==='dia'&&already.any) || (periodo==='manha'&&already.am) || (periodo==='tarde'&&already.pm)){
+    alert('Esta data já está bloqueada neste período.'); return;
+  }
+  const[y,m,d]=ds.split('-');
+  const entry={date:ds, periodo, reason:reasonEl.value.trim(), label:d+'/'+m+'/'+y};
+  try {
+    const id=DemoStore.add('datas_bloqueadas', entry);
+    blockedDates.push({id,...entry});
+    dateEl.value=''; reasonEl.value=''; periodoEl.value='dia';
+    renderBlockedList(); renderAdminCal();
+  } catch(e){ alert('Erro ao bloquear data: '+e.message); }
+}
+
+window.removeBlockedDate = async function(id){
+  try {
+    DemoStore.remove('datas_bloqueadas',id);
+    blockedDates=blockedDates.filter(b=>b.id!==id);
+    renderBlockedList(); renderAdminCal();
+  } catch(e){ alert('Erro ao remover bloqueio: '+e.message); }
+}
+
+function renderBlockedList(){
+  const sorted=[...blockedDates].sort((a,b)=>a.date.localeCompare(b.date));
+  const el=document.getElementById('blocked-list');
+  if(!sorted.length){ el.innerHTML='<span style="font-size:13px;color:var(--text-muted)">Nenhuma data bloqueada.</span>'; return; }
+  el.innerHTML=sorted.map(b=>
+    `<div class="blocked-tag">🚫 ${b.label} · ${PERIODO_LABEL[b.periodo||'dia']}${b.reason?' — '+b.reason:''} <button onclick="removeBlockedDate('${b.id}')" title="Remover bloqueio">✕</button></div>`
+  ).join('');
+}
+
+// ── RELEASED DATES (Firestore) ────────────────────────────────────────
+
+function getReleasedDates(){ return releasedDates; }
+
+window.addReleasedDate = async function(){
+  const dateEl=document.getElementById('release-date');
+  const reasonEl=document.getElementById('release-reason');
+  const ds=dateEl.value;
+  if(!ds){ dateEl.focus(); return; }
+  // Validate date
+  const today=new Date(); today.setHours(0,0,0,0);
+  const minDate=new Date(today); minDate.setDate(minDate.getDate()+20);
+  const[cy,cm,cd]=ds.split('-').map(Number);
+  const chosen=new Date(cy,cm-1,cd);
+  const isMonday = chosen.getDay()===1;
+  // Allow Mondays to be released regardless of 20-day rule (morning exception)
+  if(!isMonday && chosen>=minDate){ alert('Esta data já está disponível normalmente (fora do prazo de 20 dias).'); return; }
+  if(chosen<today){ alert('Não é possível liberar datas no passado.'); return; }
+  if(releasedDates.find(b=>b.date===ds)){ alert('Esta data já está liberada.'); return; }
+  const[y,m,d]=ds.split('-');
+  const entry={date:ds, reason:reasonEl.value.trim(), label:d+'/'+m+'/'+y};
+  try {
+    const id=DemoStore.add('datas_liberadas', entry);
+    releasedDates.push({id,...entry});
+    dateEl.value=''; reasonEl.value='';
+    renderReleasedList();
+  } catch(e){ alert('Erro ao liberar data: '+e.message); }
+}
+
+window.removeReleasedDate = async function(id){
+  try {
+    DemoStore.remove('datas_liberadas',id);
+    releasedDates=releasedDates.filter(b=>b.id!==id);
+    renderReleasedList();
+  } catch(e){ alert('Erro ao remover liberação: '+e.message); }
+}
+
+function renderReleasedList(){
+  const sorted=[...releasedDates].sort((a,b)=>a.date.localeCompare(b.date));
+  const el=document.getElementById('released-list');
+  if(!sorted.length){ el.innerHTML='<span style="font-size:13px;color:var(--text-muted)">Nenhuma data liberada antecipadamente.</span>'; return; }
+  el.innerHTML=sorted.map(b=>
+    `<div class="release-tag">✅ ${b.label}${b.reason?' — '+b.reason:''} <button onclick="removeReleasedDate('${b.id}')" title="Remover liberação">✕</button></div>`
+  ).join('');
+}
+
+// ── EXPORT SPREADSHEET ────────────────────────────────────────────────
+window.exportMonth = function(){
+  // Get current month from filter or use current month
+  const now = new Date();
+  const targetMonth = currentMonth || (now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'));
+  const [y,m] = targetMonth.split('-');
+  const monthLabel = MONTHS_PT[parseInt(m)-1]+' '+y;
+
+  const data = allBookings
+    .filter(b => b.data && b.data.startsWith(targetMonth) && b.status === 'aprovado')
+    .sort((a,b)=>(a.data||'').localeCompare(b.data||'')||(a.horaInicio||'').localeCompare(b.horaInicio||''));
+
+  if(!data.length){
+    alert('Nenhum curso aprovado em ' + monthLabel + '.');
+    return;
+  }
+
+  // Build CSV with BOM for Excel UTF-8 support
+  const BOM = '﻿';
+  const headers = ['Data','Dia','Horário','Instrutor','Título do Curso','Categoria','Tipo','Fornecedor','Valor'];
+  const WD_ABR = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  const rows = data.map(b => {
+    const[by,bm,bd] = b.data.split('-').map(Number);
+    const wd = WD_ABR[new Date(by,bm-1,bd).getDay()];
+    const dateStr = String(bd).padStart(2,'0')+'/'+String(bm).padStart(2,'0')+'/'+String(by).slice(-2);
+    const horario = (b.horaInicio||'') + ' às ' + (b.horaFim||'');
+    const val = typeof b.valor === 'number' ? 'R$ '+b.valor.toFixed(2).replace('.',',') : '';
+    return [
+      dateStr,
+      wd,
+      horario,
+      b.nome||'',
+      b.titulo||'',
+      b.categoria||'',
+      b.tipo_curso||'',
+      b.nome_fornecedor||'',
+      val
+    ].map(v => '"'+String(v).replace(/"/g,'""')+'"').join(';');
+  });
+
+  // Add summary row
+  const totalVal = data.reduce((s,b)=>s+(typeof b.valor==='number'?b.valor:0),0);
+  rows.push(''); // empty line
+  rows.push('"Total de cursos:";'+data.length+';"Valor total:";"R$ '+totalVal.toFixed(2).replace('.',',')+'"');
+
+  const csv = BOM + headers.map(h=>'"'+h+'"').join(';') + '\n' + rows.join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cursos_aprovados_'+monthLabel.replace(' ','_')+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+// Estado de login tratado em applyAuthState()
+</script>
+</body>
+</html>
