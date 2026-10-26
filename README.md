@@ -17,9 +17,16 @@
 | 🗓️ Portal do instrutor | [instrutores.html](https://heberthaugusto.github.io/portfolio-calendario-agendamento-cursos/instrutores.html) |
 | 🔧 Painel administrativo | [admin.html](https://heberthaugusto.github.io/portfolio-calendario-agendamento-cursos/admin.html) · login `admin@demo.com` / `demo1234` |
 
-A demo roda em **modo demonstração**: os dados são fictícios, ficam salvos apenas no navegador de quem acessa (localStorage) e podem ser restaurados a qualquer momento pelo link no topo da página. Fotos e e-mails são simulados. Pode agendar, aprovar, reprovar, bloquear datas e exportar o CSV à vontade.
+Pode agendar, aprovar, reprovar, bloquear datas e exportar o CSV à vontade. Os dados são fictícios, ficam salvos apenas no navegador de quem acessa e podem ser restaurados pelo link no topo da página.
 
-A marca exibida na demo (Ateliê Cacau) é fictícia. Em produção o sistema roda com a identidade visual da escola.
+> ⚠️ **Esta é uma versão de demonstração, simplificada de propósito.** A aplicação em produção, usada diariamente pela escola, é mais completa e mais segura do que o que se vê aqui:
+> - os dados ficam em banco de dados na nuvem (Firebase Firestore), compartilhados em tempo real entre instrutores e equipe, não no navegador;
+> - o acesso ao painel administrativo é feito por autenticação real (Firebase Authentication), com senha gerenciada pela equipe, não por uma credencial fixa;
+> - as fotos são enviadas para um serviço de armazenamento de imagens (Cloudinary), com validação, tentativas automáticas e expiração;
+> - os e-mails de notificação, aprovação e reprovação são realmente disparados (EmailJS), com templates próprios;
+> - as chaves de API são restritas ao domínio de produção e as regras do banco limitam quem pode gravar o quê.
+>
+> Nesta demo tudo isso foi substituído por um armazenamento local (`demo-store.js`), fotos reduzidas no próprio navegador e avisos simulados na tela, para que qualquer pessoa consiga testar o fluxo completo sem credenciais. A lógica das telas e as regras de negócio são as mesmas da produção. A marca exibida (Ateliê Cacau) é fictícia.
 
 ---
 
@@ -88,10 +95,9 @@ As regras de negócio (prazo mínimo e máximo, limite mensal, períodos permiti
 | **Camada de dados isolada** | As chamadas ao Firestore ficam concentradas em poucas funções, o que permitiu trocar por `demo-store.js` sem alterar a lógica das telas. |
 
 ### Segurança (produção)
-- Regras do Firestore: escrita de aprovações, bloqueios e liberações apenas para usuários autenticados
-- API key do Firebase restrita ao domínio de produção (referenciador HTTP)
-- Upload preset do Cloudinary restrito por pasta, tipo de arquivo e domínio
-- Chaves do EmailJS restritas ao domínio de produção
+- Aprovações, bloqueios e liberações só podem ser gravados por usuário autenticado
+- Chaves de API restritas ao domínio de produção
+- Upload de fotos restrito por tipo de arquivo, pasta e domínio
 - Nenhum segredo no front-end, apenas chaves públicas
 
 ---
@@ -116,36 +122,9 @@ Fotos:           2 a 5 · JPG ou PNG · mín. 1080×1080 px
 
 ## ⚙️ Como rodar
 
-### Demo
 Basta abrir `instrutores.html` ou `admin.html` em um servidor estático (GitHub Pages, `python -m http.server`, extensão Live Server). Não há nada para configurar.
 
-### Versão com Firebase
-1. Em `instrutores.html` e `admin.html`, troque `<script src="demo-store.js">` pela inicialização do Firebase (`initializeApp`, `getFirestore`, `getAuth`) e substitua as chamadas `DemoStore.*` por `getDocs`, `addDoc`, `updateDoc`, `deleteDoc`, `signInWithEmailAndPassword` e `onAuthStateChanged`. Os pontos de troca estão comentados no código com "Produção:".
-2. Firebase: ative o Firestore (coleções `agendamentos`, `datas_bloqueadas`, `datas_liberadas`) e o Authentication por e-mail e senha.
-3. Cloudinary: crie um upload preset *unsigned* restrito a imagens e a uma pasta.
-4. EmailJS: crie 2 templates (nova solicitação para o admin; resultado para o instrutor).
-
-Regras do Firestore usadas em produção:
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /agendamentos/{id} {
-      allow create: if true;
-      allow read: if true;
-      allow update, delete: if request.auth != null;
-    }
-    match /datas_bloqueadas/{id} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    match /datas_liberadas/{id} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-  }
-}
-```
+Os pontos do código onde a produção usa Firebase, Cloudinary e EmailJS estão comentados com "Produção:", para quem quiser ver como a demo se encaixa na arquitetura real.
 
 ---
 
