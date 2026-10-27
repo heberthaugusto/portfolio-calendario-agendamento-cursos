@@ -155,9 +155,7 @@ Os pontos do código onde a produção usa Firebase, Cloudinary e EmailJS estão
 ![Detalhes](screenshot-4.png)
 
 ---
-## ⚖️ Uso do código
-
-Este repositório é disponibilizado apenas para fins de portfólio e avaliação profissional. Todos os direitos reservados. Não é permitido copiar, modificar, distribuir ou usar o código, no todo ou em parte, para qualquer finalidade, sem autorização por escrito.
+> ⚖️ **Uso do código.** Este repositório é disponibilizado apenas para fins de portfólio e avaliação profissional. Todos os direitos reservados. Não é permitido copiar, modificar, distribuir ou usar o código, no todo ou em parte, para qualquer finalidade, sem autorização por escrito.
 ---
 
 ## 👤 Autor
